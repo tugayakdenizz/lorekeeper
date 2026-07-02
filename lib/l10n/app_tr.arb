@@ -1,0 +1,19 @@
+{
+  "@@locale": "tr",
+  "appName": "LoreKeeper",
+  "realm": "Diyar",
+  "library": "Kütüphanem",
+  "discover": "Keşfet",
+  "journal": "Notlarım",
+  "profile": "Profil",
+  "goodMorning": "Günaydın",
+  "goodAfternoon": "Tünaydın",
+  "goodEvening": "İyi Akşamlar",
+  "readyForAdventure": "Yeni bir maceraya hazır mısın?",
+  "continueReading": "Okumaya Devam Et",
+  "resume": "Devam Et",
+  "newReleases": "Yeni Çıkanlar",
+  "viewAll": "Tümünü Gör",
+  "readingStats": "Okuma İstatistikleri",
+  "details": "Detaylar"
+}

@@ -1,0 +1,19 @@
+{
+  "@@locale": "en",
+  "appName": "LoreKeeper",
+  "realm": "Realm",
+  "library": "Library",
+  "discover": "Discover",
+  "journal": "Journal",
+  "profile": "Profile",
+  "goodMorning": "Good Morning",
+  "goodAfternoon": "Good Afternoon",
+  "goodEvening": "Good Evening",
+  "readyForAdventure": "Ready for another adventure?",
+  "continueReading": "Continue Reading",
+  "resume": "Resume",
+  "newReleases": "New Releases",
+  "viewAll": "View all",
+  "readingStats": "Reading Stats",
+  "details": "Details"
+}
