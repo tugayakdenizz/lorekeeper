@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
-import 'features/home/home_screen.dart';
+import 'features/main/main_shell.dart';
 
 void main() {
   runApp(const LoreKeeperApp());
@@ -15,7 +15,7 @@ class LoreKeeperApp extends StatelessWidget {
       title: 'LoreKeeper',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: const HomeScreen(),
+      home: const MainShell(),
     );
   }
 }

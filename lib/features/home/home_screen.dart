@@ -1,52 +1,29 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_text_styles.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            const SliverPadding(
-              padding: EdgeInsets.fromLTRB(22, 20, 22, 0),
-              sliver: SliverToBoxAdapter(
-                child: _Header(),
-              ),
-            ),
-            const SliverPadding(
-              padding: EdgeInsets.fromLTRB(22, 28, 22, 0),
-              sliver: SliverToBoxAdapter(
-                child: _HeroCard(),
-              ),
-            ),
-            const SliverPadding(
-              padding: EdgeInsets.fromLTRB(22, 28, 22, 12),
-              sliver: SliverToBoxAdapter(
-                child: Text(
-                  'Your Realm',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(22, 0, 22, 24),
-              sliver: SliverGrid.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
-                childAspectRatio: 1.05,
-                children: const [
-                  _MenuCard(Icons.search_rounded, 'Discover', 'Find books'),
-                  _MenuCard(Icons.auto_stories_rounded, 'Library', 'Your books'),
-                  _MenuCard(Icons.person_heart_rounded, 'Authors', 'Follow writers'),
-                  _MenuCard(Icons.edit_note_rounded, 'Journal', 'Book notes'),
-                ],
-              ),
-            ),
-          ],
+        child: Padding(
+          padding: EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _Header(),
+              SizedBox(height: AppSpacing.xl),
+              _WelcomeCard(),
+              SizedBox(height: AppSpacing.xl),
+              Text('Your Realm', style: AppTextStyles.title),
+              SizedBox(height: AppSpacing.md),
+              Expanded(child: _RealmGrid()),
+            ],
+          ),
         ),
       ),
     );
@@ -61,50 +38,50 @@ class _Header extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'LoreKeeper',
-          style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900),
-        ),
-        SizedBox(height: 6),
+        Text('LoreKeeper', style: AppTextStyles.display),
+        SizedBox(height: AppSpacing.sm),
         Text(
           'Every story deserves a keeper.',
-          style: TextStyle(fontSize: 16, color: Colors.white70),
+          style: AppTextStyles.body,
         ),
       ],
     );
   }
 }
 
-class _HeroCard extends StatelessWidget {
-  const _HeroCard();
+class _WelcomeCard extends StatelessWidget {
+  const _WelcomeCard();
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         gradient: const LinearGradient(
-          colors: [AppTheme.card, AppTheme.cardLight],
+          colors: [
+            AppColors.surface,
+            AppColors.surfaceLight,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: AppColors.border),
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.menu_book_rounded, size: 52, color: AppTheme.gold),
-          SizedBox(height: 18),
+          Icon(Icons.auto_stories_rounded, size: 52, color: AppColors.gold),
+          SizedBox(height: AppSpacing.md),
           Text(
             'Welcome, Keeper.',
-            style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+            style: AppTextStyles.title,
           ),
-          SizedBox(height: 8),
+          SizedBox(height: AppSpacing.sm),
           Text(
             'Track your books, follow authors, and keep your reading legends alive.',
-            style: TextStyle(fontSize: 15, height: 1.4, color: Colors.white70),
+            style: AppTextStyles.body,
           ),
         ],
       ),
@@ -112,30 +89,70 @@ class _HeroCard extends StatelessWidget {
   }
 }
 
-class _MenuCard extends StatelessWidget {
+class _RealmGrid extends StatelessWidget {
+  const _RealmGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      crossAxisCount: 2,
+      crossAxisSpacing: AppSpacing.md,
+      mainAxisSpacing: AppSpacing.md,
+      childAspectRatio: 1.05,
+      children: const [
+        _RealmCard(
+          icon: Icons.search_rounded,
+          title: 'Discover',
+          subtitle: 'Find books',
+        ),
+        _RealmCard(
+          icon: Icons.menu_book_rounded,
+          title: 'Library',
+          subtitle: 'Your books',
+        ),
+        _RealmCard(
+          icon: Icons.favorite_rounded,
+          title: 'Authors',
+          subtitle: 'Follow writers',
+        ),
+        _RealmCard(
+          icon: Icons.edit_note_rounded,
+          title: 'Journal',
+          subtitle: 'Book notes',
+        ),
+      ],
+    );
+  }
+}
+
+class _RealmCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
 
-  const _MenuCard(this.icon, this.title, this.subtitle);
+  const _RealmCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppTheme.gold, size: 34),
+          Icon(icon, color: AppColors.gold, size: 34),
           const Spacer(),
-          Text(title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(fontSize: 13, color: Colors.white60)),
+          Text(title, style: AppTextStyles.title.copyWith(fontSize: 19)),
+          const SizedBox(height: AppSpacing.xs),
+          Text(subtitle, style: AppTextStyles.caption),
         ],
       ),
     );
