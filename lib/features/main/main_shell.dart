@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../home/home_screen.dart';
+import '../search/search_screen.dart';
+import '../library/library_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -14,8 +16,8 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget> _screens = const [
     HomeScreen(),
-    _PlaceholderScreen(title: 'Library'),
-    _PlaceholderScreen(title: 'Discover'),
+    LibraryScreen(),
+    SearchScreen(),
     _PlaceholderScreen(title: 'Journal'),
     _PlaceholderScreen(title: 'Profile'),
   ];
@@ -23,7 +25,10 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
+        ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         backgroundColor: AppColors.surface,

@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:lorekeeper/l10n/app_localizations.dart';
 
+import 'core/services/library_storage_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/main/main_shell.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final libraryStorage = LibraryStorageService();
+  await libraryStorage.init();
+
   runApp(const LoreKeeperApp());
 }
 
