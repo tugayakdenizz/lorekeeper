@@ -3,6 +3,8 @@ import '../../core/theme/app_colors.dart';
 import '../home/home_screen.dart';
 import '../search/search_screen.dart';
 import '../library/library_screen.dart';
+import '../journal/journal_screen.dart';
+import '../profile/profile_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -18,8 +20,8 @@ class _MainShellState extends State<MainShell> {
     HomeScreen(),
     LibraryScreen(),
     SearchScreen(),
-    _PlaceholderScreen(title: 'Journal'),
-    _PlaceholderScreen(title: 'Profile'),
+    JournalScreen(),
+    ProfileScreen(),
   ];
 
   @override
@@ -42,27 +44,27 @@ class _MainShellState extends State<MainShell> {
           NavigationDestination(
             icon: Icon(Icons.castle_outlined),
             selectedIcon: Icon(Icons.castle),
-            label: 'Realm',
+            label: 'Diyar',
           ),
           NavigationDestination(
             icon: Icon(Icons.menu_book_outlined),
             selectedIcon: Icon(Icons.menu_book),
-            label: 'Library',
+            label: 'Kütüphane',
           ),
           NavigationDestination(
             icon: Icon(Icons.search_outlined),
             selectedIcon: Icon(Icons.search),
-            label: 'Discover',
+            label: 'Keşfet',
           ),
           NavigationDestination(
             icon: Icon(Icons.edit_note_outlined),
             selectedIcon: Icon(Icons.edit_note),
-            label: 'Journal',
+            label: 'Günlük',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
-            label: 'Profile',
+            label: 'Profil',
           ),
         ],
       ),
