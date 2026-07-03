@@ -153,7 +153,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
                           return BookResultCard(
                             book: book,
-                            isAdded: addedBookIds.contains(book.id),
+                            isAdded: _libraryStorage.containsBook(book.id),
                             onAdd: () => _toggleBook(book),
                             onTap: () => _openBookDetail(book),
                           );

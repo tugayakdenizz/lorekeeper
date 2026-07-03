@@ -19,6 +19,7 @@ abstract class UserBook with _$UserBook {
     required Book book,
     @Default(UserBookStatus.wantToRead) UserBookStatus status,
     @Default(0) int currentPage,
+    int? totalPagesOverride,
     @Default(false) bool isFavorite,
     double? userRating,
     DateTime? addedAt,

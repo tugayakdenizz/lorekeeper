@@ -46,7 +46,7 @@ class LibraryStorageService {
   }
 
   bool containsBook(String bookId) {
-    return _box.containsKey(bookId);
+    return getUserBooks().any((userBook) => userBook.book.id == bookId);
   }
 
   List<UserBook> getUserBooks() {
@@ -54,7 +54,11 @@ class LibraryStorageService {
 
     for (final value in _box.values) {
       try {
-        final json = Map<String, dynamic>.from(value);
+        final json = _normalizeMap(value);
+        final bookJson = _normalizeMap(json['book']);
+
+        json['book'] = bookJson;
+
         result.add(UserBook.fromJson(json));
       } catch (_) {
         // Bozuk kayıt varsa uygulamayı çökertme.
@@ -70,7 +74,6 @@ class LibraryStorageService {
 
   Future<void> updateUserBook(UserBook userBook) async {
     final updated = userBook.copyWith(updatedAt: DateTime.now());
-
     await _box.put(updated.id, _userBookToHiveJson(updated));
     _refresh();
   }
@@ -80,10 +83,11 @@ class LibraryStorageService {
 
     for (final entry in entries.entries) {
       try {
-        final json = Map<String, dynamic>.from(entry.value);
+        final json = _normalizeMap(entry.value);
 
         if (!json.containsKey('book')) {
           final book = Book.fromJson(json);
+
           final userBook = UserBook(
             id: book.id,
             book: book,
@@ -104,6 +108,10 @@ class LibraryStorageService {
     final json = userBook.toJson();
     json['book'] = userBook.book.toJson();
     return json;
+  }
+
+  Map<String, dynamic> _normalizeMap(dynamic value) {
+    return Map<String, dynamic>.from(value as Map);
   }
 
   void _refresh() {

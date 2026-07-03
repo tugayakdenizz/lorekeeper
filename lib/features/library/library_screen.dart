@@ -4,14 +4,13 @@ import '../../core/services/library_storage_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../shared/models/user_book.dart';
+import 'widgets/library_section.dart';
 
 class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final storage = LibraryStorageService();
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -42,94 +41,37 @@ class LibraryScreen extends StatelessWidget {
                       );
                     }
 
-                    return ListView.separated(
-                      itemCount: userBooks.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(height: AppSpacing.md),
-                      itemBuilder: (context, index) {
-                        final userBook = userBooks[index];
-                        final book = userBook.book;
-
-                        return Container(
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(22),
-                            border: Border.all(color: AppColors.border),
+                    return ListView(
+                      children: [
+                        LibrarySection(
+                          title: '📖 Okuyorum',
+                          books: _filterByStatus(
+                            userBooks,
+                            UserBookStatus.reading,
                           ),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
-                                child: book.coverUrl == null
-                                    ? Container(
-                                        width: 58,
-                                        height: 86,
-                                        color: AppColors.surfaceLight,
-                                        child: const Icon(
-                                          Icons.menu_book_rounded,
-                                          color: AppColors.gold,
-                                        ),
-                                      )
-                                    : Image.network(
-                                        book.coverUrl!,
-                                        width: 58,
-                                        height: 86,
-                                        fit: BoxFit.cover,
-                                      ),
-                              ),
-                              const SizedBox(width: AppSpacing.md),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      book.title,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      book.authors.isNotEmpty
-                                          ? book.authors.join(', ')
-                                          : 'Unknown author',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      _statusText(userBook.status),
-                                      style: const TextStyle(
-                                        color: AppColors.gold,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () {
-                                  storage.removeBook(book.id);
-                                },
-                                icon: const Icon(
-                                  Icons.delete_outline_rounded,
-                                  color: AppColors.gold,
-                                ),
-                              ),
-                            ],
+                        ),
+                        LibrarySection(
+                          title: '⭐ Okuyacağım',
+                          books: _filterByStatus(
+                            userBooks,
+                            UserBookStatus.wantToRead,
                           ),
-                        );
-                      },
+                        ),
+                        LibrarySection(
+                          title: '✅ Bitirdim',
+                          books: _filterByStatus(
+                            userBooks,
+                            UserBookStatus.finished,
+                          ),
+                        ),
+                        LibrarySection(
+                          title: '❌ Yarım Bıraktım',
+                          books: _filterByStatus(
+                            userBooks,
+                            UserBookStatus.dnf,
+                          ),
+                        ),
+                      ],
                     );
                   },
                 ),
@@ -140,17 +82,11 @@ class LibraryScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-String _statusText(UserBookStatus status) {
-  switch (status) {
-    case UserBookStatus.wantToRead:
-      return '⭐ Okuyacağım';
-    case UserBookStatus.reading:
-      return '📖 Okuyorum';
-    case UserBookStatus.finished:
-      return '✅ Bitirdim';
-    case UserBookStatus.dnf:
-      return '❌ Yarım Bıraktım';
+  static List<UserBook> _filterByStatus(
+    List<UserBook> userBooks,
+    UserBookStatus status,
+  ) {
+    return userBooks.where((item) => item.status == status).toList();
   }
 }

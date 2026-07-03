@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UserBook {
 
- String get id; Book get book; UserBookStatus get status; int get currentPage; bool get isFavorite; double? get userRating; DateTime? get addedAt; DateTime? get startedAt; DateTime? get finishedAt; DateTime? get updatedAt;
+ String get id; Book get book; UserBookStatus get status; int get currentPage; int? get totalPagesOverride; bool get isFavorite; double? get userRating; DateTime? get addedAt; DateTime? get startedAt; DateTime? get finishedAt; DateTime? get updatedAt;
 /// Create a copy of UserBook
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $UserBookCopyWith<UserBook> get copyWith => _$UserBookCopyWithImpl<UserBook>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserBook&&(identical(other.id, id) || other.id == id)&&(identical(other.book, book) || other.book == book)&&(identical(other.status, status) || other.status == status)&&(identical(other.currentPage, currentPage) || other.currentPage == currentPage)&&(identical(other.isFavorite, isFavorite) || other.isFavorite == isFavorite)&&(identical(other.userRating, userRating) || other.userRating == userRating)&&(identical(other.addedAt, addedAt) || other.addedAt == addedAt)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.finishedAt, finishedAt) || other.finishedAt == finishedAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserBook&&(identical(other.id, id) || other.id == id)&&(identical(other.book, book) || other.book == book)&&(identical(other.status, status) || other.status == status)&&(identical(other.currentPage, currentPage) || other.currentPage == currentPage)&&(identical(other.totalPagesOverride, totalPagesOverride) || other.totalPagesOverride == totalPagesOverride)&&(identical(other.isFavorite, isFavorite) || other.isFavorite == isFavorite)&&(identical(other.userRating, userRating) || other.userRating == userRating)&&(identical(other.addedAt, addedAt) || other.addedAt == addedAt)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.finishedAt, finishedAt) || other.finishedAt == finishedAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,book,status,currentPage,isFavorite,userRating,addedAt,startedAt,finishedAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,book,status,currentPage,totalPagesOverride,isFavorite,userRating,addedAt,startedAt,finishedAt,updatedAt);
 
 @override
 String toString() {
-  return 'UserBook(id: $id, book: $book, status: $status, currentPage: $currentPage, isFavorite: $isFavorite, userRating: $userRating, addedAt: $addedAt, startedAt: $startedAt, finishedAt: $finishedAt, updatedAt: $updatedAt)';
+  return 'UserBook(id: $id, book: $book, status: $status, currentPage: $currentPage, totalPagesOverride: $totalPagesOverride, isFavorite: $isFavorite, userRating: $userRating, addedAt: $addedAt, startedAt: $startedAt, finishedAt: $finishedAt, updatedAt: $updatedAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $UserBookCopyWith<$Res>  {
   factory $UserBookCopyWith(UserBook value, $Res Function(UserBook) _then) = _$UserBookCopyWithImpl;
 @useResult
 $Res call({
- String id, Book book, UserBookStatus status, int currentPage, bool isFavorite, double? userRating, DateTime? addedAt, DateTime? startedAt, DateTime? finishedAt, DateTime? updatedAt
+ String id, Book book, UserBookStatus status, int currentPage, int? totalPagesOverride, bool isFavorite, double? userRating, DateTime? addedAt, DateTime? startedAt, DateTime? finishedAt, DateTime? updatedAt
 });
 
 
@@ -65,13 +65,14 @@ class _$UserBookCopyWithImpl<$Res>
 
 /// Create a copy of UserBook
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? book = null,Object? status = null,Object? currentPage = null,Object? isFavorite = null,Object? userRating = freezed,Object? addedAt = freezed,Object? startedAt = freezed,Object? finishedAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? book = null,Object? status = null,Object? currentPage = null,Object? totalPagesOverride = freezed,Object? isFavorite = null,Object? userRating = freezed,Object? addedAt = freezed,Object? startedAt = freezed,Object? finishedAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,book: null == book ? _self.book : book // ignore: cast_nullable_to_non_nullable
 as Book,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as UserBookStatus,currentPage: null == currentPage ? _self.currentPage : currentPage // ignore: cast_nullable_to_non_nullable
-as int,isFavorite: null == isFavorite ? _self.isFavorite : isFavorite // ignore: cast_nullable_to_non_nullable
+as int,totalPagesOverride: freezed == totalPagesOverride ? _self.totalPagesOverride : totalPagesOverride // ignore: cast_nullable_to_non_nullable
+as int?,isFavorite: null == isFavorite ? _self.isFavorite : isFavorite // ignore: cast_nullable_to_non_nullable
 as bool,userRating: freezed == userRating ? _self.userRating : userRating // ignore: cast_nullable_to_non_nullable
 as double?,addedAt: freezed == addedAt ? _self.addedAt : addedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,startedAt: freezed == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
@@ -171,10 +172,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  Book book,  UserBookStatus status,  int currentPage,  bool isFavorite,  double? userRating,  DateTime? addedAt,  DateTime? startedAt,  DateTime? finishedAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  Book book,  UserBookStatus status,  int currentPage,  int? totalPagesOverride,  bool isFavorite,  double? userRating,  DateTime? addedAt,  DateTime? startedAt,  DateTime? finishedAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UserBook() when $default != null:
-return $default(_that.id,_that.book,_that.status,_that.currentPage,_that.isFavorite,_that.userRating,_that.addedAt,_that.startedAt,_that.finishedAt,_that.updatedAt);case _:
+return $default(_that.id,_that.book,_that.status,_that.currentPage,_that.totalPagesOverride,_that.isFavorite,_that.userRating,_that.addedAt,_that.startedAt,_that.finishedAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -192,10 +193,10 @@ return $default(_that.id,_that.book,_that.status,_that.currentPage,_that.isFavor
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  Book book,  UserBookStatus status,  int currentPage,  bool isFavorite,  double? userRating,  DateTime? addedAt,  DateTime? startedAt,  DateTime? finishedAt,  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  Book book,  UserBookStatus status,  int currentPage,  int? totalPagesOverride,  bool isFavorite,  double? userRating,  DateTime? addedAt,  DateTime? startedAt,  DateTime? finishedAt,  DateTime? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _UserBook():
-return $default(_that.id,_that.book,_that.status,_that.currentPage,_that.isFavorite,_that.userRating,_that.addedAt,_that.startedAt,_that.finishedAt,_that.updatedAt);case _:
+return $default(_that.id,_that.book,_that.status,_that.currentPage,_that.totalPagesOverride,_that.isFavorite,_that.userRating,_that.addedAt,_that.startedAt,_that.finishedAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -212,10 +213,10 @@ return $default(_that.id,_that.book,_that.status,_that.currentPage,_that.isFavor
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  Book book,  UserBookStatus status,  int currentPage,  bool isFavorite,  double? userRating,  DateTime? addedAt,  DateTime? startedAt,  DateTime? finishedAt,  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  Book book,  UserBookStatus status,  int currentPage,  int? totalPagesOverride,  bool isFavorite,  double? userRating,  DateTime? addedAt,  DateTime? startedAt,  DateTime? finishedAt,  DateTime? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _UserBook() when $default != null:
-return $default(_that.id,_that.book,_that.status,_that.currentPage,_that.isFavorite,_that.userRating,_that.addedAt,_that.startedAt,_that.finishedAt,_that.updatedAt);case _:
+return $default(_that.id,_that.book,_that.status,_that.currentPage,_that.totalPagesOverride,_that.isFavorite,_that.userRating,_that.addedAt,_that.startedAt,_that.finishedAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -227,13 +228,14 @@ return $default(_that.id,_that.book,_that.status,_that.currentPage,_that.isFavor
 @JsonSerializable()
 
 class _UserBook implements UserBook {
-  const _UserBook({required this.id, required this.book, this.status = UserBookStatus.wantToRead, this.currentPage = 0, this.isFavorite = false, this.userRating, this.addedAt, this.startedAt, this.finishedAt, this.updatedAt});
+  const _UserBook({required this.id, required this.book, this.status = UserBookStatus.wantToRead, this.currentPage = 0, this.totalPagesOverride, this.isFavorite = false, this.userRating, this.addedAt, this.startedAt, this.finishedAt, this.updatedAt});
   factory _UserBook.fromJson(Map<String, dynamic> json) => _$UserBookFromJson(json);
 
 @override final  String id;
 @override final  Book book;
 @override@JsonKey() final  UserBookStatus status;
 @override@JsonKey() final  int currentPage;
+@override final  int? totalPagesOverride;
 @override@JsonKey() final  bool isFavorite;
 @override final  double? userRating;
 @override final  DateTime? addedAt;
@@ -254,16 +256,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserBook&&(identical(other.id, id) || other.id == id)&&(identical(other.book, book) || other.book == book)&&(identical(other.status, status) || other.status == status)&&(identical(other.currentPage, currentPage) || other.currentPage == currentPage)&&(identical(other.isFavorite, isFavorite) || other.isFavorite == isFavorite)&&(identical(other.userRating, userRating) || other.userRating == userRating)&&(identical(other.addedAt, addedAt) || other.addedAt == addedAt)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.finishedAt, finishedAt) || other.finishedAt == finishedAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserBook&&(identical(other.id, id) || other.id == id)&&(identical(other.book, book) || other.book == book)&&(identical(other.status, status) || other.status == status)&&(identical(other.currentPage, currentPage) || other.currentPage == currentPage)&&(identical(other.totalPagesOverride, totalPagesOverride) || other.totalPagesOverride == totalPagesOverride)&&(identical(other.isFavorite, isFavorite) || other.isFavorite == isFavorite)&&(identical(other.userRating, userRating) || other.userRating == userRating)&&(identical(other.addedAt, addedAt) || other.addedAt == addedAt)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.finishedAt, finishedAt) || other.finishedAt == finishedAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,book,status,currentPage,isFavorite,userRating,addedAt,startedAt,finishedAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,book,status,currentPage,totalPagesOverride,isFavorite,userRating,addedAt,startedAt,finishedAt,updatedAt);
 
 @override
 String toString() {
-  return 'UserBook(id: $id, book: $book, status: $status, currentPage: $currentPage, isFavorite: $isFavorite, userRating: $userRating, addedAt: $addedAt, startedAt: $startedAt, finishedAt: $finishedAt, updatedAt: $updatedAt)';
+  return 'UserBook(id: $id, book: $book, status: $status, currentPage: $currentPage, totalPagesOverride: $totalPagesOverride, isFavorite: $isFavorite, userRating: $userRating, addedAt: $addedAt, startedAt: $startedAt, finishedAt: $finishedAt, updatedAt: $updatedAt)';
 }
 
 
@@ -274,7 +276,7 @@ abstract mixin class _$UserBookCopyWith<$Res> implements $UserBookCopyWith<$Res>
   factory _$UserBookCopyWith(_UserBook value, $Res Function(_UserBook) _then) = __$UserBookCopyWithImpl;
 @override @useResult
 $Res call({
- String id, Book book, UserBookStatus status, int currentPage, bool isFavorite, double? userRating, DateTime? addedAt, DateTime? startedAt, DateTime? finishedAt, DateTime? updatedAt
+ String id, Book book, UserBookStatus status, int currentPage, int? totalPagesOverride, bool isFavorite, double? userRating, DateTime? addedAt, DateTime? startedAt, DateTime? finishedAt, DateTime? updatedAt
 });
 
 
@@ -291,13 +293,14 @@ class __$UserBookCopyWithImpl<$Res>
 
 /// Create a copy of UserBook
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? book = null,Object? status = null,Object? currentPage = null,Object? isFavorite = null,Object? userRating = freezed,Object? addedAt = freezed,Object? startedAt = freezed,Object? finishedAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? book = null,Object? status = null,Object? currentPage = null,Object? totalPagesOverride = freezed,Object? isFavorite = null,Object? userRating = freezed,Object? addedAt = freezed,Object? startedAt = freezed,Object? finishedAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_UserBook(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,book: null == book ? _self.book : book // ignore: cast_nullable_to_non_nullable
 as Book,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as UserBookStatus,currentPage: null == currentPage ? _self.currentPage : currentPage // ignore: cast_nullable_to_non_nullable
-as int,isFavorite: null == isFavorite ? _self.isFavorite : isFavorite // ignore: cast_nullable_to_non_nullable
+as int,totalPagesOverride: freezed == totalPagesOverride ? _self.totalPagesOverride : totalPagesOverride // ignore: cast_nullable_to_non_nullable
+as int?,isFavorite: null == isFavorite ? _self.isFavorite : isFavorite // ignore: cast_nullable_to_non_nullable
 as bool,userRating: freezed == userRating ? _self.userRating : userRating // ignore: cast_nullable_to_non_nullable
 as double?,addedAt: freezed == addedAt ? _self.addedAt : addedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,startedAt: freezed == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable

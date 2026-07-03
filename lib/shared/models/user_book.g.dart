@@ -13,6 +13,7 @@ _UserBook _$UserBookFromJson(Map<String, dynamic> json) => _UserBook(
       $enumDecodeNullable(_$UserBookStatusEnumMap, json['status']) ??
       UserBookStatus.wantToRead,
   currentPage: (json['currentPage'] as num?)?.toInt() ?? 0,
+  totalPagesOverride: (json['totalPagesOverride'] as num?)?.toInt(),
   isFavorite: json['isFavorite'] as bool? ?? false,
   userRating: (json['userRating'] as num?)?.toDouble(),
   addedAt: json['addedAt'] == null
@@ -34,6 +35,7 @@ Map<String, dynamic> _$UserBookToJson(_UserBook instance) => <String, dynamic>{
   'book': instance.book,
   'status': _$UserBookStatusEnumMap[instance.status]!,
   'currentPage': instance.currentPage,
+  'totalPagesOverride': instance.totalPagesOverride,
   'isFavorite': instance.isFavorite,
   'userRating': instance.userRating,
   'addedAt': instance.addedAt?.toIso8601String(),
