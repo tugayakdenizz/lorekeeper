@@ -4,6 +4,7 @@ import '../../core/services/library_storage_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../shared/models/book.dart';
+import '../../shared/models/user_book.dart';
 
 class BookDetailScreen extends StatefulWidget {
   final Book book;
@@ -22,8 +23,41 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
 
   bool get _isAdded => _storage.containsBook(widget.book.id);
 
+  UserBook? get _userBook {
+    try {
+      return _storage
+          .getUserBooks()
+          .firstWhere((item) => item.book.id == widget.book.id);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _toggleBook() async {
     await _storage.toggleBook(widget.book);
+    setState(() {});
+  }
+
+  Future<void> _updateStatus(UserBookStatus status) async {
+    if (!_isAdded) {
+      await _storage.addBook(widget.book);
+    }
+
+    final current = _userBook;
+    if (current == null) return;
+
+    await _storage.updateUserBook(
+      current.copyWith(
+        status: status,
+        startedAt: status == UserBookStatus.reading
+            ? current.startedAt ?? DateTime.now()
+            : current.startedAt,
+        finishedAt: status == UserBookStatus.finished
+            ? DateTime.now()
+            : current.finishedAt,
+      ),
+    );
+
     setState(() {});
   }
 
@@ -32,6 +66,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     final book = widget.book;
     final author =
         book.authors.isNotEmpty ? book.authors.join(', ') : 'Unknown author';
+
+    final selectedStatus = _userBook?.status;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -118,6 +154,42 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
+              const Text(
+                'Okuma Durumu',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  _StatusChip(
+                    label: 'Okuyacağım',
+                    isSelected: selectedStatus == UserBookStatus.wantToRead,
+                    onTap: () => _updateStatus(UserBookStatus.wantToRead),
+                  ),
+                  _StatusChip(
+                    label: 'Okuyorum',
+                    isSelected: selectedStatus == UserBookStatus.reading,
+                    onTap: () => _updateStatus(UserBookStatus.reading),
+                  ),
+                  _StatusChip(
+                    label: 'Bitirdim',
+                    isSelected: selectedStatus == UserBookStatus.finished,
+                    onTap: () => _updateStatus(UserBookStatus.finished),
+                  ),
+                  _StatusChip(
+                    label: 'Yarım Bıraktım',
+                    isSelected: selectedStatus == UserBookStatus.dnf,
+                    onTap: () => _updateStatus(UserBookStatus.dnf),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xl),
               if (book.description != null) ...[
                 const Text(
                   'Açıklama',
@@ -138,6 +210,40 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                 ),
               ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _StatusChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.gold : AppColors.surface,
+          borderRadius: BorderRadius.circular(99),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? AppColors.background : AppColors.textSecondary,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ),

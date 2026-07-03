@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/services/library_storage_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
-import '../../shared/models/book.dart';
+import '../../shared/models/user_book.dart';
 
 class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key});
@@ -30,10 +30,10 @@ class LibraryScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.lg),
               Expanded(
-                child: ValueListenableBuilder<List<Book>>(
-                  valueListenable: LibraryStorageService.booksNotifier,
-                  builder: (context, books, _) {
-                    if (books.isEmpty) {
+                child: ValueListenableBuilder<List<UserBook>>(
+                  valueListenable: LibraryStorageService.userBooksNotifier,
+                  builder: (context, userBooks, _) {
+                    if (userBooks.isEmpty) {
                       return const Center(
                         child: Text(
                           'Henüz kütüphanene kitap eklemedin.',
@@ -43,11 +43,12 @@ class LibraryScreen extends StatelessWidget {
                     }
 
                     return ListView.separated(
-                      itemCount: books.length,
+                      itemCount: userBooks.length,
                       separatorBuilder: (_, __) =>
                           const SizedBox(height: AppSpacing.md),
                       itemBuilder: (context, index) {
-                        final book = books[index];
+                        final userBook = userBooks[index];
+                        final book = userBook.book;
 
                         return Container(
                           padding: const EdgeInsets.all(AppSpacing.md),
@@ -104,6 +105,15 @@ class LibraryScreen extends StatelessWidget {
                                         fontSize: 13,
                                       ),
                                     ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _statusText(userBook.status),
+                                      style: const TextStyle(
+                                        color: AppColors.gold,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -129,5 +139,18 @@ class LibraryScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+String _statusText(UserBookStatus status) {
+  switch (status) {
+    case UserBookStatus.wantToRead:
+      return '⭐ Okuyacağım';
+    case UserBookStatus.reading:
+      return '📖 Okuyorum';
+    case UserBookStatus.finished:
+      return '✅ Bitirdim';
+    case UserBookStatus.dnf:
+      return '❌ Yarım Bıraktım';
   }
 }

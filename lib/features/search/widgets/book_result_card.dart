@@ -25,22 +25,25 @@ class BookResultCard extends StatelessWidget {
 
     final year = book.publishedDate?.year.toString();
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(22),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _BookCover(url: book.coverUrl),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: onTap,
+            child: _BookCover(url: book.coverUrl),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onTap,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -93,8 +96,8 @@ class BookResultCard extends StatelessWidget {
                         ),
                       ],
                       const Spacer(),
-                      InkWell(
-                        borderRadius: BorderRadius.circular(99),
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
                         onTap: onAdd,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -123,8 +126,8 @@ class BookResultCard extends StatelessWidget {
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
