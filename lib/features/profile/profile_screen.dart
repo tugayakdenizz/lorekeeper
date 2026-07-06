@@ -1,12 +1,96 @@
 import 'package:flutter/material.dart';
 
 import '../../core/services/library_storage_service.dart';
+import '../../core/services/reading_goal_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../shared/models/user_book.dart';
+import 'widgets/achievements_section.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
+
+  Future<void> _showGoalSheet(BuildContext context, int currentGoal) async {
+    final controller = TextEditingController(text: currentGoal.toString());
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: AppSpacing.lg,
+            right: AppSpacing.lg,
+            top: AppSpacing.lg,
+            bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Yıllık Okuma Hedefi',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  hintText: 'Örn: 30',
+                  hintStyle: const TextStyle(color: AppColors.textMuted),
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final goal = int.tryParse(controller.text.trim()) ?? 30;
+                    final safeGoal = goal <= 0 ? 1 : goal;
+
+                    await ReadingGoalService().updateGoal(safeGoal);
+
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.gold,
+                    foregroundColor: AppColors.background,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  child: const Text(
+                    'Kaydet',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    controller.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,14 +128,6 @@ class ProfileScreen extends StatelessWidget {
                 (total, item) => total + item.currentPage,
               );
 
-              final achievements = _buildAchievements(
-                totalBooks: userBooks.length,
-                finishedBooks: finished,
-                favoriteBooks: favoriteBooks.length,
-                ratedBooks: ratedBooks.length,
-                pagesRead: pages,
-              );
-
               return SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,6 +142,17 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     const _ProfileHeader(),
+                    const SizedBox(height: AppSpacing.xl),
+                    ValueListenableBuilder<int>(
+                      valueListenable: ReadingGoalService.goalNotifier,
+                      builder: (context, goal, _) {
+                        return _ReadingGoalSettingsCard(
+                          goal: goal,
+                          finishedCount: finished,
+                          onEditPressed: () => _showGoalSheet(context, goal),
+                        );
+                      },
+                    ),
                     const SizedBox(height: AppSpacing.xl),
                     Row(
                       children: [
@@ -121,7 +208,7 @@ class ProfileScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    _AchievementsSection(achievements: achievements),
+                    AchievementsSection(userBooks: userBooks),
                     const SizedBox(height: AppSpacing.xl),
                     _FavoritesSection(favoriteBooks: favoriteBooks),
                     const SizedBox(height: AppSpacing.xl),
@@ -150,160 +237,91 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  List<_Achievement> _buildAchievements({
-    required int totalBooks,
-    required int finishedBooks,
-    required int favoriteBooks,
-    required int ratedBooks,
-    required int pagesRead,
-  }) {
-    return [
-      _Achievement(
-        emoji: '📚',
-        title: 'İlk Kitap',
-        description: 'Kütüphanene ilk kitabını ekledin.',
-        isUnlocked: totalBooks >= 1,
-      ),
-      _Achievement(
-        emoji: '📖',
-        title: 'Kitap Kurdu',
-        description: 'Toplam 1000 sayfa ilerleme kaydettin.',
-        isUnlocked: pagesRead >= 1000,
-      ),
-      _Achievement(
-        emoji: '✅',
-        title: 'Bitirici',
-        description: 'İlk kitabını bitirdin.',
-        isUnlocked: finishedBooks >= 1,
-      ),
-      _Achievement(
-        emoji: '👑',
-        title: 'Usta Okur',
-        description: '10 kitabı tamamladın.',
-        isUnlocked: finishedBooks >= 10,
-      ),
-      _Achievement(
-        emoji: '❤️',
-        title: 'Favori Rafı',
-        description: '5 kitabı favorilerine ekledin.',
-        isUnlocked: favoriteBooks >= 5,
-      ),
-      _Achievement(
-        emoji: '⭐',
-        title: 'Eleştirmen',
-        description: '5 kitaba puan verdin.',
-        isUnlocked: ratedBooks >= 5,
-      ),
-    ];
-  }
 }
 
-class _Achievement {
-  final String emoji;
-  final String title;
-  final String description;
-  final bool isUnlocked;
+class _ReadingGoalSettingsCard extends StatelessWidget {
+  final int goal;
+  final int finishedCount;
+  final VoidCallback onEditPressed;
 
-  const _Achievement({
-    required this.emoji,
-    required this.title,
-    required this.description,
-    required this.isUnlocked,
-  });
-}
-
-class _AchievementsSection extends StatelessWidget {
-  final List<_Achievement> achievements;
-
-  const _AchievementsSection({
-    required this.achievements,
+  const _ReadingGoalSettingsCard({
+    required this.goal,
+    required this.finishedCount,
+    required this.onEditPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    final unlockedCount =
-        achievements.where((achievement) => achievement.isUnlocked).length;
+    final progress = goal > 0 ? (finishedCount / goal).clamp(0.0, 1.0) : 0.0;
+    final percent = (progress * 100).round();
+    final remaining = (goal - finishedCount).clamp(0, goal);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '🏆 Başarılar ($unlockedCount/${achievements.length})',
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        ...achievements.map(
-          (achievement) => Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            child: _AchievementCard(achievement: achievement),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AchievementCard extends StatelessWidget {
-  final _Achievement achievement;
-
-  const _AchievementCard({
-    required this.achievement,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: achievement.isUnlocked ? 1 : 0.45,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: achievement.isUnlocked ? AppColors.gold : AppColors.border,
-          ),
-        ),
-        child: Row(
-          children: [
-            Text(
-              achievement.emoji,
-              style: const TextStyle(fontSize: 30),
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '🎯 Yıllık Hedef',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
             ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    achievement.title,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    achievement.description,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$finishedCount / $goal kitap • $percent%',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: AppColors.background.withOpacity(0.55),
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.gold),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            remaining == 0
+                ? '🎉 Hedef tamamlandı.'
+                : '$remaining kitap kaldı.',
+            style: const TextStyle(
+              color: AppColors.gold,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: onEditPressed,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.gold,
+                side: const BorderSide(color: AppColors.gold),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+              child: const Text(
+                'Hedefi Değiştir',
+                style: TextStyle(fontWeight: FontWeight.w900),
               ),
             ),
-            Icon(
-              achievement.isUnlocked
-                  ? Icons.check_circle_rounded
-                  : Icons.lock_rounded,
-              color: AppColors.gold,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

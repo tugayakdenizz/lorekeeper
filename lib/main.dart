@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:lorekeeper/l10n/app_localizations.dart';
 
 import 'core/services/library_storage_service.dart';
+import 'core/services/reading_goal_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/main/main_shell.dart';
 
@@ -11,6 +12,8 @@ Future<void> main() async {
 
   final libraryStorage = LibraryStorageService();
   await libraryStorage.init();
+  final readingGoalService = ReadingGoalService();
+  await readingGoalService.init();
 
   runApp(const LoreKeeperApp());
 }

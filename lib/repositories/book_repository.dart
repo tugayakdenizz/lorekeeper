@@ -7,48 +7,37 @@ class BookRepository {
   final GoogleBooksService _googleBooks = GoogleBooksService();
 
   Future<List<Book>> searchBooks(String query) async {
-    final queries = _buildSearchQueries(query);
-    final allResults = <Book>[];
+    final searchQuery = query.trim();
 
-    for (final searchQuery in queries) {
+    if (searchQuery.isEmpty) return [];
+
+    Object? lastError;
+
+    try {
       final openLibraryResults = await _openLibrary.searchBooks(searchQuery);
-      final googleResults = await _googleBooks.searchBooks(searchQuery);
 
-      allResults.addAll(openLibraryResults);
-      allResults.addAll(googleResults);
+      if (openLibraryResults.isNotEmpty) {
+        return _mergeBooks(openLibraryResults);
+      }
+    } catch (error) {
+      lastError = error;
     }
 
-    return _mergeBooks(allResults);
-  }
+    try {
+      final googleResults = await _googleBooks.searchBooks(searchQuery);
 
-  List<String> _buildSearchQueries(String query) {
-    final trimmed = query.trim();
-    final withoutTurkishChars = _removeTurkishChars(trimmed);
+      if (googleResults.isNotEmpty) {
+        return _mergeBooks(googleResults);
+      }
+    } catch (error) {
+      lastError = error;
+    }
 
-    return {
-      trimmed,
-      withoutTurkishChars,
-      '$trimmed kitap',
-      '$withoutTurkishChars kitap',
-      '$trimmed roman',
-      '$withoutTurkishChars roman',
-    }.where((q) => q.trim().isNotEmpty).toList();
-  }
+    if (lastError != null) {
+      throw lastError;
+    }
 
-  String _removeTurkishChars(String value) {
-    return value
-        .replaceAll('ç', 'c')
-        .replaceAll('Ç', 'C')
-        .replaceAll('ğ', 'g')
-        .replaceAll('Ğ', 'G')
-        .replaceAll('ı', 'i')
-        .replaceAll('İ', 'I')
-        .replaceAll('ö', 'o')
-        .replaceAll('Ö', 'O')
-        .replaceAll('ş', 's')
-        .replaceAll('Ş', 'S')
-        .replaceAll('ü', 'u')
-        .replaceAll('Ü', 'U');
+    return [];
   }
 
   List<Book> _mergeBooks(List<Book> books) {

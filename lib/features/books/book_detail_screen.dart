@@ -5,10 +5,13 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../shared/models/book.dart';
 import '../../shared/models/user_book.dart';
-import 'widgets/book_header.dart';
+import 'widgets/book_cover.dart';
 import 'widgets/description_section.dart';
 import 'widgets/info_chips.dart';
+import 'widgets/progress_bottom_sheet.dart';
+import 'widgets/rating_section.dart';
 import 'widgets/reading_progress_section.dart';
+import 'widgets/reading_sessions_section.dart';
 
 class BookDetailScreen extends StatefulWidget {
   final Book book;
@@ -113,16 +116,6 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     final current = _userBook;
     if (current == null) return;
 
-    final currentPageController = TextEditingController(
-      text: current.currentPage == 0 ? '' : current.currentPage.toString(),
-    );
-
-    final totalPageController = TextEditingController(
-      text:
-          (current.totalPagesOverride ?? current.book.pageCount)?.toString() ??
-              '',
-    );
-
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -131,85 +124,17 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
       ),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: AppSpacing.lg,
-            right: AppSpacing.lg,
-            top: AppSpacing.lg,
-            bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'İlerlemeyi Güncelle',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _ProgressField(
-                controller: currentPageController,
-                hintText: 'Bulunduğun sayfa',
-              ),
-              const SizedBox(height: AppSpacing.md),
-              _ProgressField(
-                controller: totalPageController,
-                hintText: 'Toplam sayfa',
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final currentPage =
-                        int.tryParse(currentPageController.text.trim()) ?? 0;
-                    final totalPages =
-                        int.tryParse(totalPageController.text.trim());
-
-                    final safePage = totalPages == null
-                        ? currentPage
-                        : currentPage.clamp(0, totalPages);
-
-                    await _storage.updateUserBook(
-                      current.copyWith(
-                        currentPage: safePage,
-                        totalPagesOverride: totalPages,
-                        status: safePage > 0
-                            ? UserBookStatus.reading
-                            : current.status,
-                        startedAt: current.startedAt ?? DateTime.now(),
-                      ),
-                    );
-
-                    if (!mounted) return;
-
-                    Navigator.pop(context);
-                    setState(() {});
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.gold,
-                    foregroundColor: AppColors.background,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                  child: const Text(
-                    'Kaydet',
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                ),
-              ),
-            ],
-          ),
+        return ProgressBottomSheet(
+          userBook: current,
+          onSave: (updatedUserBook) async {
+            await _storage.updateUserBook(updatedUserBook);
+            if (mounted) {
+              setState(() {});
+            }
+          },
         );
       },
     );
-
-    
   }
 
   @override
@@ -228,59 +153,79 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back_ios_new_rounded),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Center(child: _BookCover(book: book)),
-              const SizedBox(height: AppSpacing.lg),
-              BookHeader(
-                title: book.title,
-                author: author,
+              _TopBar(
                 isFavorite: userBook?.isFavorite == true,
+                onBackPressed: () => Navigator.pop(context),
                 onFavoritePressed: _toggleFavorite,
               ),
-              InfoChips(book: book, totalPages: _totalPages),
-              const SizedBox(height: AppSpacing.lg),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _toggleBook,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        _isAdded ? AppColors.surfaceLight : AppColors.gold,
-                    foregroundColor:
-                        _isAdded ? AppColors.textPrimary : AppColors.background,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                  child: Text(
-                    _isAdded ? 'Kütüphaneden Çıkar' : 'Kütüphaneye Ekle',
-                    style: const TextStyle(fontWeight: FontWeight.w900),
-                  ),
+              const SizedBox(height: AppSpacing.md),
+
+              _HeroBookSection(
+                book: book,
+                author: author,
+                totalPages: _totalPages,
+                rating: userBook?.userRating,
+              ),
+
+              const SizedBox(height: AppSpacing.xl),
+
+              _PrimaryActionButton(
+                isAdded: _isAdded,
+                onPressed: _toggleBook,
+              ),
+
+              const SizedBox(height: AppSpacing.xl),
+
+              _PremiumSection(
+                child: _ReadingStatusSection(
+                  selectedStatus: userBook?.status,
+                  onStatusChanged: _updateStatus,
                 ),
               ),
-              const SizedBox(height: AppSpacing.xl),
-              _ReadingStatusSection(
-                selectedStatus: userBook?.status,
-                onStatusChanged: _updateStatus,
+
+              const SizedBox(height: AppSpacing.lg),
+
+              _PremiumSection(
+                child: RatingSection(
+                  rating: userBook?.userRating,
+                  onRatingChanged: _updateRating,
+                ),
               ),
-              const SizedBox(height: AppSpacing.xl),
-              _RatingSection(
-                rating: userBook?.userRating,
-                onRatingChanged: _updateRating,
+
+              const SizedBox(height: AppSpacing.lg),
+
+              _PremiumSection(
+                child: ReadingProgressSection(
+                  userBook: userBook,
+                  totalPages: _totalPages,
+                  onUpdatePressed: _showProgressSheet,
+                ),
               ),
+
+              if (userBook != null) ...[
+                const SizedBox(height: AppSpacing.lg),
+                _PremiumSection(
+                  child: ReadingSessionsSection(
+                    sessions: userBook.readingSessions,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _PremiumSection(
+                  child: _BookStatsSection(
+                    userBook: userBook,
+                    totalPages: _totalPages,
+                  ),
+                ),
+              ],
+
+              if ((book.description ?? '').trim().isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.lg),
+                _PremiumSection(
+                  child: DescriptionSection(description: book.description),
+                ),
+              ],
+
               const SizedBox(height: AppSpacing.xl),
-              ReadingProgressSection(
-                userBook: userBook,
-                totalPages: _totalPages,
-                onUpdatePressed: _showProgressSheet,
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              DescriptionSection(description: book.description),
             ],
           ),
         ),
@@ -289,61 +234,411 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   }
 }
 
-class _BookCover extends StatelessWidget {
-  final Book book;
 
-  const _BookCover({required this.book});
+class _BookStatsSection extends StatelessWidget {
+  final UserBook userBook;
+  final int? totalPages;
 
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(22),
-      child: book.coverUrl == null
-          ? Container(
-              width: 150,
-              height: 220,
-              color: AppColors.surfaceLight,
-              child: const Icon(
-                Icons.menu_book_rounded,
-                size: 56,
-                color: AppColors.gold,
-              ),
-            )
-          : Image.network(
-              book.coverUrl!,
-              width: 150,
-              height: 220,
-              fit: BoxFit.cover,
-            ),
-    );
-  }
-}
-
-class _ProgressField extends StatelessWidget {
-  final TextEditingController controller;
-  final String hintText;
-
-  const _ProgressField({
-    required this.controller,
-    required this.hintText,
+  const _BookStatsSection({
+    required this.userBook,
+    required this.totalPages,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      keyboardType: TextInputType.number,
-      style: const TextStyle(color: AppColors.textPrimary),
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: const TextStyle(color: AppColors.textMuted),
-        filled: true,
-        fillColor: AppColors.background,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide.none,
+    final rating = userBook.userRating;
+    final addedAt = userBook.addedAt;
+    final progressText = totalPages == null || totalPages == 0
+        ? '${userBook.currentPage} sayfa'
+        : '${userBook.currentPage} / $totalPages sayfa';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '📚 Kitap İstatistikleri',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _BookStatRow(
+          icon: Icons.auto_stories_rounded,
+          label: 'Durum',
+          value: _statusText(userBook.status),
+        ),
+        _BookStatRow(
+          icon: Icons.trending_up_rounded,
+          label: 'İlerleme',
+          value: progressText,
+        ),
+        _BookStatRow(
+          icon: Icons.star_rounded,
+          label: 'Puanın',
+          value: rating == null ? 'Henüz yok' : '${rating.toStringAsFixed(0)} / 5',
+        ),
+        _BookStatRow(
+          icon: Icons.favorite_rounded,
+          label: 'Favori',
+          value: userBook.isFavorite ? 'Evet' : 'Hayır',
+        ),
+        _BookStatRow(
+          icon: Icons.calendar_month_rounded,
+          label: 'Eklenme',
+          value: addedAt == null ? 'Bilinmiyor' : _dateText(addedAt),
+          isLast: true,
+        ),
+      ],
+    );
+  }
+
+  String _statusText(UserBookStatus status) {
+    switch (status) {
+      case UserBookStatus.wantToRead:
+        return 'Okuyacağım';
+      case UserBookStatus.reading:
+        return 'Okuyorum';
+      case UserBookStatus.finished:
+        return 'Bitirdim';
+      case UserBookStatus.dnf:
+        return 'Yarım Bıraktım';
+    }
+  }
+
+  String _dateText(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}.'
+        '${date.month.toString().padLeft(2, '0')}.'
+        '${date.year}';
+  }
+}
+
+class _BookStatRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool isLast;
+
+  const _BookStatRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.isLast = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        top: 12,
+        bottom: isLast ? 0 : 12,
+      ),
+      decoration: BoxDecoration(
+        border: isLast
+            ? null
+            : Border(
+                bottom: BorderSide(
+                  color: AppColors.border.withOpacity(0.7),
+                ),
+              ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: AppColors.gold,
+            size: 20,
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+class _TopBar extends StatelessWidget {
+  final bool isFavorite;
+  final VoidCallback onBackPressed;
+  final VoidCallback onFavoritePressed;
+
+  const _TopBar({
+    required this.isFavorite,
+    required this.onBackPressed,
+    required this.onFavoritePressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _CircleIconButton(
+          icon: Icons.arrow_back_ios_new_rounded,
+          onPressed: onBackPressed,
+        ),
+        const Spacer(),
+        _CircleIconButton(
+          icon: isFavorite
+              ? Icons.favorite_rounded
+              : Icons.favorite_border_rounded,
+          onPressed: onFavoritePressed,
+          isActive: isFavorite,
+        ),
+      ],
+    );
+  }
+}
+
+class _CircleIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+  final bool isActive;
+
+  const _CircleIconButton({
+    required this.icon,
+    required this.onPressed,
+    this.isActive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: isActive ? AppColors.gold : AppColors.surface,
+      borderRadius: BorderRadius.circular(99),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(99),
+        onTap: onPressed,
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(99),
+            border: Border.all(
+              color: isActive ? AppColors.gold : AppColors.border,
+            ),
+          ),
+          child: Icon(
+            icon,
+            color: isActive ? AppColors.background : AppColors.gold,
+            size: 21,
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _HeroBookSection extends StatelessWidget {
+  final Book book;
+  final String author;
+  final int? totalPages;
+  final double? rating;
+
+  const _HeroBookSection({
+    required this.book,
+    required this.author,
+    required this.totalPages,
+    required this.rating,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.surface,
+            AppColors.surfaceLight.withOpacity(0.55),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.gold.withOpacity(0.08),
+            blurRadius: 28,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.background.withOpacity(0.55),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: AppColors.gold.withOpacity(0.18)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.gold.withOpacity(0.16),
+                  blurRadius: 36,
+                  offset: const Offset(0, 18),
+                ),
+              ],
+            ),
+            child: BookCover(
+              coverUrl: book.coverUrl,
+              width: 156,
+              height: 230,
+              borderRadius: 22,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            book.title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 28,
+              height: 1.12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            author,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          InfoChips(book: book, totalPages: totalPages),
+          if (rating != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            _RatingBadge(rating: rating!),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RatingBadge extends StatelessWidget {
+  final double rating;
+
+  const _RatingBadge({
+    required this.rating,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 8,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.gold.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: AppColors.gold.withOpacity(0.28)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.star_rounded,
+            color: AppColors.gold,
+            size: 18,
+          ),
+          const SizedBox(width: 5),
+          Text(
+            '${rating.toStringAsFixed(0)} / 5',
+            style: const TextStyle(
+              color: AppColors.gold,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrimaryActionButton extends StatelessWidget {
+  final bool isAdded;
+  final VoidCallback onPressed;
+
+  const _PrimaryActionButton({
+    required this.isAdded,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(
+          isAdded
+              ? Icons.remove_circle_outline_rounded
+              : Icons.add_circle_outline_rounded,
+        ),
+        label: Text(
+          isAdded ? 'Kütüphaneden Çıkar' : 'Kütüphaneye Ekle',
+          style: const TextStyle(fontWeight: FontWeight.w900),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isAdded ? AppColors.surfaceLight : AppColors.gold,
+          foregroundColor: isAdded ? AppColors.textPrimary : AppColors.background,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: isAdded ? AppColors.border : AppColors.gold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PremiumSection extends StatelessWidget {
+  final Widget child;
+
+  const _PremiumSection({
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: child,
     );
   }
 }
@@ -417,12 +712,15 @@ class _StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.gold : AppColors.surface,
+          color: isSelected ? AppColors.gold : AppColors.background,
           borderRadius: BorderRadius.circular(99),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(
+            color: isSelected ? AppColors.gold : AppColors.border,
+          ),
         ),
         child: Text(
           label,
@@ -432,68 +730,6 @@ class _StatusChip extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _RatingSection extends StatelessWidget {
-  final double? rating;
-  final ValueChanged<double> onRatingChanged;
-
-  const _RatingSection({
-    required this.rating,
-    required this.onRatingChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final selectedRating = rating ?? 0;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Puanım',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        Row(
-          children: List.generate(5, (index) {
-            final starValue = index + 1;
-            final isSelected = selectedRating >= starValue;
-
-            return IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(
-                minWidth: 42,
-                minHeight: 42,
-              ),
-              onPressed: () => onRatingChanged(starValue.toDouble()),
-              icon: Icon(
-                isSelected
-                    ? Icons.star_rounded
-                    : Icons.star_border_rounded,
-                color: AppColors.gold,
-                size: 34,
-              ),
-            );
-          }),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          selectedRating == 0
-              ? 'Henüz puan vermedin.'
-              : '${selectedRating.toStringAsFixed(0)} / 5',
-          style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
     );
   }
 }

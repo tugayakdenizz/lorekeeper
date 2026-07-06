@@ -1,3 +1,4 @@
+import '../../books/widgets/book_cover.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/services/library_storage_service.dart';
@@ -50,24 +51,11 @@ class LibraryBookCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: book.coverUrl == null
-                  ? Container(
-                      width: 74,
-                      height: 110,
-                      color: AppColors.surfaceLight,
-                      child: const Icon(
-                        Icons.menu_book_rounded,
-                        color: AppColors.gold,
-                      ),
-                    )
-                  : Image.network(
-                      book.coverUrl!,
-                      width: 74,
-                      height: 110,
-                      fit: BoxFit.cover,
-                    ),
+            BookCover(
+            coverUrl: book.coverUrl,
+            width: 74,
+            height: 110,
+            borderRadius: 16,
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(

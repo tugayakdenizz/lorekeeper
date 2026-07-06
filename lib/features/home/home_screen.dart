@@ -1,12 +1,72 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../../core/services/library_storage_service.dart';
+import '../../core/services/reading_goal_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../shared/models/user_book.dart';
+import '../books/book_detail_screen.dart';
+import '../books/widgets/book_cover.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  static const List<String> _mysticMessages = [
+    'Sisler çöktü, okumaya devam et.',
+    'Her kitap yeni bir sır saklar.',
+    'Kredik Shaw seni bekliyor.',
+    'Bugün hangi sırrı keşfedeceksin?',
+    'Her sayfa yeni bir efsanenin başlangıcıdır.',
+    'Bir sonraki bölüm sislerin ardında.',
+    'Bilgelik bazen eski bir sayfada saklıdır.',
+    'Okuduğun her kitap kendi efsaneni büyütür.',
+  ];
+
+  late String _currentMysticMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentMysticMessage = _pickMessage();
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _currentMysticMessage = _pickMessage(except: _currentMysticMessage);
+  }
+
+  String _pickMessage({String? except}) {
+    final random = Random(DateTime.now().microsecondsSinceEpoch);
+
+    if (_mysticMessages.length == 1) {
+      return _mysticMessages.first;
+    }
+
+    String selected = _mysticMessages[random.nextInt(_mysticMessages.length)];
+
+    while (selected == except) {
+      selected = _mysticMessages[random.nextInt(_mysticMessages.length)];
+    }
+
+    return selected;
+  }
+
+  void _openBookDetail(BuildContext context, UserBook userBook) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BookDetailScreen(book: userBook.book),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,10 +86,6 @@ class HomeScreen extends StatelessWidget {
                   .where((e) => e.status == UserBookStatus.finished)
                   .toList();
 
-              final wantToReadBooks = userBooks
-                  .where((e) => e.status == UserBookStatus.wantToRead)
-                  .toList();
-
               final favoriteBooks =
                   userBooks.where((e) => e.isFavorite).toList();
 
@@ -46,7 +102,7 @@ class HomeScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Diyar',
+                      'Kredik Shaw',
                       style: TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 36,
@@ -54,29 +110,50 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
-                      'Okuma yolculuğuna devam et.',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 15,
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 320),
+                      transitionBuilder: (child, animation) {
+                        final slideAnimation = Tween<Offset>(
+                          begin: const Offset(0, 0.25),
+                          end: Offset.zero,
+                        ).animate(animation);
+
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: slideAnimation,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: Text(
+                        _currentMysticMessage,
+                        key: ValueKey(_currentMysticMessage),
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
-
                     if (continueBook != null)
-                      _ContinueReadingCard(userBook: continueBook)
+                      _ContinueReadingCard(
+                        userBook: continueBook,
+                        onTap: () => _openBookDetail(context, continueBook),
+                      )
                     else
                       const _EmptyContinueCard(),
-
                     const SizedBox(height: AppSpacing.xl),
-
-                    _ReadingGoalCard(
-                      finishedCount: finishedBooks.length,
-                      goalCount: 30,
+                    ValueListenableBuilder<int>(
+                      valueListenable: ReadingGoalService.goalNotifier,
+                      builder: (context, goal, _) {
+                        return _ReadingGoalCard(
+                          finishedCount: finishedBooks.length,
+                          goalCount: goal,
+                        );
+                      },
                     ),
-
                     const SizedBox(height: AppSpacing.xl),
-
                     Row(
                       children: [
                         Expanded(
@@ -96,9 +173,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: AppSpacing.md),
-
                     Row(
                       children: [
                         Expanded(
@@ -118,13 +193,13 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: AppSpacing.xl),
-
-                    _FavoriteBooksSection(favoriteBooks: favoriteBooks),
-
+                    _FavoriteBooksSection(
+                      favoriteBooks: favoriteBooks,
+                      onBookTap: (userBook) =>
+                          _openBookDetail(context, userBook),
+                    ),
                     const SizedBox(height: AppSpacing.xl),
-
                     const Text(
                       'Son Eklenenler',
                       style: TextStyle(
@@ -134,7 +209,6 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
-
                     if (userBooks.isEmpty)
                       const Text(
                         'Henüz kitap eklemedin.',
@@ -146,10 +220,13 @@ class HomeScreen extends StatelessWidget {
                               padding: const EdgeInsets.only(
                                 bottom: AppSpacing.md,
                               ),
-                              child: _MiniBookCard(userBook: userBook),
+                              child: _MiniBookCard(
+                                userBook: userBook,
+                                onTap: () =>
+                                    _openBookDetail(context, userBook),
+                              ),
                             ),
                           ),
-
                     const SizedBox(height: AppSpacing.xl),
                   ],
                 ),
@@ -164,8 +241,12 @@ class HomeScreen extends StatelessWidget {
 
 class _ContinueReadingCard extends StatelessWidget {
   final UserBook userBook;
+  final VoidCallback onTap;
 
-  const _ContinueReadingCard({required this.userBook});
+  const _ContinueReadingCard({
+    required this.userBook,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -178,92 +259,87 @@ class _ContinueReadingCard extends StatelessWidget {
 
     final percent = (progress * 100).round();
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: book.coverUrl == null
-                ? Container(
-                    width: 88,
-                    height: 132,
-                    color: AppColors.surfaceLight,
-                    child: const Icon(
-                      Icons.menu_book_rounded,
-                      color: AppColors.gold,
-                    ),
-                  )
-                : Image.network(
-                    book.coverUrl!,
-                    width: 88,
-                    height: 132,
-                    fit: BoxFit.cover,
-                  ),
-          ),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Devam Et',
-                  style: TextStyle(
-                    color: AppColors.gold,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  book.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  book.authors.isNotEmpty
-                      ? book.authors.join(', ')
-                      : 'Unknown author',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(99),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 7,
-                    backgroundColor: AppColors.background.withOpacity(0.55),
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(AppColors.gold),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  totalPages == null
-                      ? '${userBook.currentPage} sayfa'
-                      : '${userBook.currentPage} / $totalPages sayfa • $percent%',
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            BookCover(
+              coverUrl: book.coverUrl,
+              width: 88,
+              height: 132,
+              borderRadius: 18,
             ),
-          ),
-        ],
+            const SizedBox(width: AppSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Devam Et',
+                    style: TextStyle(
+                      color: AppColors.gold,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    book.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 21,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    book.authors.isNotEmpty
+                        ? book.authors.join(', ')
+                        : 'Unknown author',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(99),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 7,
+                      backgroundColor: AppColors.background.withOpacity(0.55),
+                      valueColor:
+                          const AlwaysStoppedAnimation<Color>(AppColors.gold),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    totalPages == null
+                        ? '${userBook.currentPage} sayfa'
+                        : '${userBook.currentPage} / $totalPages sayfa • $percent%',
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.gold,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -313,6 +389,7 @@ class _ReadingGoalCard extends StatelessWidget {
         : 0.0;
 
     final percent = (progress * 100).round();
+    final remaining = (goalCount - finishedCount).clamp(0, goalCount);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -340,6 +417,16 @@ class _ReadingGoalCard extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
+          const SizedBox(height: 14),
+          Text(
+            remaining == 0
+                ? '🎉 Tebrikler! Yıllık hedefini tamamladın.'
+                : '$remaining kitap kaldı.',
+            style: const TextStyle(
+              color: AppColors.gold,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
           const SizedBox(height: AppSpacing.md),
           ClipRRect(
             borderRadius: BorderRadius.circular(99),
@@ -358,9 +445,11 @@ class _ReadingGoalCard extends StatelessWidget {
 
 class _FavoriteBooksSection extends StatelessWidget {
   final List<UserBook> favoriteBooks;
+  final ValueChanged<UserBook> onBookTap;
 
   const _FavoriteBooksSection({
     required this.favoriteBooks,
+    required this.onBookTap,
   });
 
   @override
@@ -403,7 +492,10 @@ class _FavoriteBooksSection extends StatelessWidget {
         ...favoriteBooks.take(3).map(
               (userBook) => Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: _MiniBookCard(userBook: userBook),
+                child: _MiniBookCard(
+                  userBook: userBook,
+                  onTap: () => onBookTap(userBook),
+                ),
               ),
             ),
       ],
@@ -456,74 +548,76 @@ class _StatCard extends StatelessWidget {
 
 class _MiniBookCard extends StatelessWidget {
   final UserBook userBook;
+  final VoidCallback onTap;
 
-  const _MiniBookCard({required this.userBook});
+  const _MiniBookCard({
+    required this.userBook,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final book = userBook.book;
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: book.coverUrl == null
-                ? Container(
-                    width: 48,
-                    height: 70,
-                    color: AppColors.surfaceLight,
-                    child: const Icon(
-                      Icons.menu_book_rounded,
-                      color: AppColors.gold,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            BookCover(
+              coverUrl: book.coverUrl,
+              width: 48,
+              height: 70,
+              borderRadius: 12,
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    book.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w900,
                     ),
-                  )
-                : Image.network(
-                    book.coverUrl!,
-                    width: 48,
-                    height: 70,
-                    fit: BoxFit.cover,
                   ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  book.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w900,
+                  const SizedBox(height: 4),
+                  Text(
+                    _statusText(userBook.status),
+                    style: const TextStyle(
+                      color: AppColors.gold,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _statusText(userBook.status),
-                  style: const TextStyle(
-                    color: AppColors.gold,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          if (userBook.isFavorite)
+            if (userBook.isFavorite)
+              const Padding(
+                padding: EdgeInsets.only(right: 4),
+                child: Icon(
+                  Icons.favorite_rounded,
+                  color: AppColors.gold,
+                  size: 20,
+                ),
+              ),
             const Icon(
-              Icons.favorite_rounded,
-              color: AppColors.gold,
-              size: 20,
+              Icons.chevron_right_rounded,
+              color: AppColors.textMuted,
             ),
-        ],
+          ],
+        ),
       ),
     );
   }

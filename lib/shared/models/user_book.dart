@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'book.dart';
+import 'reading_session.dart';
 
 part 'user_book.freezed.dart';
 part 'user_book.g.dart';
@@ -14,14 +15,16 @@ enum UserBookStatus {
 
 @freezed
 abstract class UserBook with _$UserBook {
+  @JsonSerializable(explicitToJson: true)
   const factory UserBook({
     required String id,
     required Book book,
     @Default(UserBookStatus.wantToRead) UserBookStatus status,
     @Default(0) int currentPage,
-    int? totalPagesOverride,
+    @Default([]) List<ReadingSession> readingSessions,
     @Default(false) bool isFavorite,
     double? userRating,
+    int? totalPagesOverride,
     DateTime? addedAt,
     DateTime? startedAt,
     DateTime? finishedAt,

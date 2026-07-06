@@ -1,3 +1,4 @@
+import '../../books/widgets/book_cover.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -144,15 +145,11 @@ class _BookCover extends StatelessWidget {
       return const _CoverPlaceholder();
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Image.network(
-        url!,
-        width: 72,
-        height: 108,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const _CoverPlaceholder(),
-      ),
+    return BookCover(
+    coverUrl: url,
+    width: 72,
+    height: 108,
+    borderRadius: 16,
     );
   }
 }

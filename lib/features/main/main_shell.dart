@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../home/home_screen.dart';
 import '../search/search_screen.dart';
@@ -15,28 +16,33 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
-
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    LibraryScreen(),
-    SearchScreen(),
-    JournalScreen(),
-    ProfileScreen(),
-  ];
+  int _homeRefreshKey = 0;
 
   @override
   Widget build(BuildContext context) {
+    final screens = [
+      HomeScreen(key: ValueKey('home_$_homeRefreshKey')),
+      const LibraryScreen(),
+      const SearchScreen(),
+      const JournalScreen(),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: _screens,
-        ),
+        children: screens,
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         backgroundColor: AppColors.surface,
         indicatorColor: AppColors.gold.withOpacity(0.18),
         onDestinationSelected: (index) {
           setState(() {
+            if (index == 0 && _currentIndex != 0) {
+              _homeRefreshKey++;
+            }
+
             _currentIndex = index;
           });
         },
@@ -67,25 +73,6 @@ class _MainShellState extends State<MainShell> {
             label: 'Profil',
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PlaceholderScreen extends StatelessWidget {
-  final String title;
-
-  const _PlaceholderScreen({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-        ),
       ),
     );
   }

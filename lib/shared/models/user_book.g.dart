@@ -13,9 +13,14 @@ _UserBook _$UserBookFromJson(Map<String, dynamic> json) => _UserBook(
       $enumDecodeNullable(_$UserBookStatusEnumMap, json['status']) ??
       UserBookStatus.wantToRead,
   currentPage: (json['currentPage'] as num?)?.toInt() ?? 0,
-  totalPagesOverride: (json['totalPagesOverride'] as num?)?.toInt(),
+  readingSessions:
+      (json['readingSessions'] as List<dynamic>?)
+          ?.map((e) => ReadingSession.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
   isFavorite: json['isFavorite'] as bool? ?? false,
   userRating: (json['userRating'] as num?)?.toDouble(),
+  totalPagesOverride: (json['totalPagesOverride'] as num?)?.toInt(),
   addedAt: json['addedAt'] == null
       ? null
       : DateTime.parse(json['addedAt'] as String),
@@ -32,12 +37,13 @@ _UserBook _$UserBookFromJson(Map<String, dynamic> json) => _UserBook(
 
 Map<String, dynamic> _$UserBookToJson(_UserBook instance) => <String, dynamic>{
   'id': instance.id,
-  'book': instance.book,
+  'book': instance.book.toJson(),
   'status': _$UserBookStatusEnumMap[instance.status]!,
   'currentPage': instance.currentPage,
-  'totalPagesOverride': instance.totalPagesOverride,
+  'readingSessions': instance.readingSessions.map((e) => e.toJson()).toList(),
   'isFavorite': instance.isFavorite,
   'userRating': instance.userRating,
+  'totalPagesOverride': instance.totalPagesOverride,
   'addedAt': instance.addedAt?.toIso8601String(),
   'startedAt': instance.startedAt?.toIso8601String(),
   'finishedAt': instance.finishedAt?.toIso8601String(),
