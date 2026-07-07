@@ -10,10 +10,15 @@ import 'features/main/main_shell.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final libraryStorage = LibraryStorageService();
-  await libraryStorage.init();
-  final readingGoalService = ReadingGoalService();
-  await readingGoalService.init();
+  try {
+    final libraryStorage = LibraryStorageService();
+    await libraryStorage.init();
+
+    final readingGoalService = ReadingGoalService();
+    await readingGoalService.init();
+  } catch (error) {
+    debugPrint('Startup init error: $error');
+  }
 
   runApp(const LoreKeeperApp());
 }
