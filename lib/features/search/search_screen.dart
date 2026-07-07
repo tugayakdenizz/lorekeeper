@@ -7,6 +7,7 @@ import '../../repositories/book_repository.dart';
 import '../../shared/models/book.dart';
 import '../../shared/models/user_book.dart';
 import '../books/book_detail_screen.dart';
+import '../books/manual_book_add_screen.dart';
 import 'widgets/book_result_card.dart';
 
 enum _SearchState { idle, loading, success, empty, error }
@@ -73,7 +74,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final text = error.toString().toLowerCase();
 
     if (text.contains('429') || text.contains('too many requests')) {
-      return 'Google Books şu an çok fazla istek aldı. Birkaç dakika sonra tekrar dene.';
+      return 'Kadim raflar şu an çok yoğun. Birkaç dakika sonra tekrar dene.';
     }
 
     if (text.contains('socket') ||
@@ -83,7 +84,7 @@ class _SearchScreenState extends State<SearchScreen> {
       return 'İnternet bağlantını kontrol edip tekrar dene.';
     }
 
-    return 'Arama sırasında bir sorun oluştu. Lütfen tekrar dene.';
+    return 'Arama sırasında beklenmeyen bir sorun oluştu. Lütfen tekrar dene.';
   }
 
   Future<void> _toggleBook(Book book) async {
@@ -111,6 +112,25 @@ class _SearchScreenState extends State<SearchScreen> {
         builder: (_) => BookDetailScreen(book: book),
       ),
     );
+  }
+
+  Future<void> _openManualBookAdd() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ManualBookAddScreen(),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (result == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kitap başarıyla kütüphaneye eklendi.'),
+        ),
+      );
+    }
   }
 
   Set<String> _addedIdsFromUserBooks(List<UserBook> userBooks) {
@@ -150,7 +170,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Discover',
+                    'Keşfet',
                     style: TextStyle(
                       fontSize: 34,
                       fontWeight: FontWeight.w900,
@@ -159,7 +179,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Yeni kitaplar ve yazarlar keşfet.',
+                    'Kadim raflarda yeni kitaplar ara.',
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.w700,
@@ -182,6 +202,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       lastQuery: _lastQuery,
                       addedBookIds: addedBookIds,
                       onRetry: _search,
+                      onManualAdd: _openManualBookAdd,
                       onBookTap: _openBookDetail,
                       onBookAdd: _toggleBook,
                     ),
@@ -280,6 +301,7 @@ class _SearchContent extends StatelessWidget {
   final String lastQuery;
   final Set<String> addedBookIds;
   final VoidCallback onRetry;
+  final VoidCallback onManualAdd;
   final ValueChanged<Book> onBookTap;
   final ValueChanged<Book> onBookAdd;
 
@@ -290,6 +312,7 @@ class _SearchContent extends StatelessWidget {
     required this.lastQuery,
     required this.addedBookIds,
     required this.onRetry,
+    required this.onManualAdd,
     required this.onBookTap,
     required this.onBookAdd,
   });
@@ -305,13 +328,12 @@ class _SearchContent extends StatelessWidget {
         );
 
       case _SearchState.loading:
-        return const _LoadingState();
+        return const _PremiumLoadingState();
 
       case _SearchState.empty:
-        return _StateMessage(
-          icon: Icons.search_off_rounded,
-          title: 'Sonuç bulunamadı',
-          subtitle: '"$lastQuery" için eşleşen kitap bulunamadı.',
+        return _EmptySearchResult(
+          lastQuery: lastQuery,
+          onManualAdd: onManualAdd,
         );
 
       case _SearchState.error:
@@ -339,67 +361,188 @@ class _SearchContent extends StatelessWidget {
   }
 }
 
-class _LoadingState extends StatelessWidget {
-  const _LoadingState();
+class _EmptySearchResult extends StatelessWidget {
+  final String lastQuery;
+  final VoidCallback onManualAdd;
+
+  const _EmptySearchResult({
+    required this.lastQuery,
+    required this.onManualAdd,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      itemCount: 6,
-      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
-      itemBuilder: (context, index) {
-        return Container(
-          height: 118,
-          padding: const EdgeInsets.all(AppSpacing.md),
+    return SingleChildScrollView(
+      child: Center(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(28),
             border: Border.all(color: AppColors.border),
           ),
-          child: Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 58,
-                height: 86,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceLight,
-                  borderRadius: BorderRadius.circular(12),
+              const Icon(Icons.search_off_rounded, color: AppColors.gold, size: 38),
+              const SizedBox(height: AppSpacing.md),
+              const Text(
+                'Raflarda iz bulunamadı',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _SkeletonLine(width: double.infinity),
-                    const SizedBox(height: 10),
-                    const _SkeletonLine(width: 150),
-                    const Spacer(),
-                    const _SkeletonLine(width: 90),
-                  ],
+              const SizedBox(height: 8),
+              Text(
+                '"$lastQuery" için eşleşen kitap bulunamadı.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Divider(color: AppColors.border.withOpacity(0.8)),
+              const SizedBox(height: AppSpacing.md),
+              const Text(
+                'Aradığın kitabı kendin ekleyebilirsin.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: onManualAdd,
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text(
+                    'Kitabı Manuel Ekle',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.gold,
+                    foregroundColor: AppColors.background,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
 
-class _SkeletonLine extends StatelessWidget {
-  final double width;
+class _PremiumLoadingState extends StatefulWidget {
+  const _PremiumLoadingState();
 
-  const _SkeletonLine({required this.width});
+  @override
+  State<_PremiumLoadingState> createState() => _PremiumLoadingStateState();
+}
+
+class _PremiumLoadingStateState extends State<_PremiumLoadingState>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1300),
+    )..repeat(reverse: true);
+
+    _pulse = Tween<double>(begin: 0.72, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: 12,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(99),
+    return Center(
+      child: FadeTransition(
+        opacity: _pulse,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.gold.withOpacity(0.08),
+                blurRadius: 30,
+                offset: const Offset(0, 14),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(26),
+                  border: Border.all(
+                    color: AppColors.gold.withOpacity(0.35),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.auto_stories_rounded,
+                  color: AppColors.gold,
+                  size: 38,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              const Text(
+                'Sisler arasında kitap aranıyor...',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 21,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Kadim raflar karıştırılıyor.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: const LinearProgressIndicator(
+                  minHeight: 7,
+                  backgroundColor: AppColors.background,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.gold),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -429,7 +572,7 @@ class _StateMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: AppColors.gold, size: 40),
+            Icon(icon, color: AppColors.gold, size: 42),
             const SizedBox(height: AppSpacing.md),
             Text(
               title,
@@ -485,7 +628,7 @@ class _ErrorState extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             const Text(
-              'Arama tamamlanamadı',
+              'Sisler çok yoğun',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.textPrimary,

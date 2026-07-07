@@ -9,6 +9,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../shared/models/user_book.dart';
 import '../books/book_detail_screen.dart';
 import '../books/widgets/book_cover.dart';
+import '../../shared/widgets/empty_state.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -210,9 +211,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     if (userBooks.isEmpty)
-                      const Text(
-                        'Henüz kitap eklemedin.',
-                        style: TextStyle(color: AppColors.textSecondary),
+                      const SizedBox(
+                        height: 260,
+                        child: EmptyState(
+                          icon: Icons.library_books_rounded,
+                          title: 'Henüz kitap eklemedin',
+                          subtitle:
+                              'İlk kitabını Keşfet bölümünden ekleyerek kütüphaneni oluşturmaya başla.',
+                        ),
                       )
                     else
                       ...userBooks.reversed.take(3).map(
@@ -350,24 +356,13 @@ class _EmptyContinueCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.auto_stories_rounded, color: AppColors.gold),
-          SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Text(
-              'Okumaya başladığın bir kitap burada görünecek.',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-          ),
-        ],
+    return const SizedBox(
+      height: 320,
+      child: EmptyState(
+        icon: Icons.auto_stories_rounded,
+        title: 'Sisler sessiz...',
+        subtitle:
+            'Şu anda okumakta olduğun bir kitap bulunmuyor.\nKeşfet bölümünden bir kitap ekleyerek macerana başlayabilirsin.',
       ),
     );
   }
@@ -455,24 +450,13 @@ class _FavoriteBooksSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (favoriteBooks.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.favorite_border_rounded, color: AppColors.gold),
-            SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Text(
-                'Favori kitapların burada görünecek.',
-                style: TextStyle(color: AppColors.textSecondary),
-              ),
-            ),
-          ],
+      return const SizedBox(
+        height: 260,
+        child: EmptyState(
+          icon: Icons.favorite_rounded,
+          title: 'Henüz favori kitabın yok',
+          subtitle:
+              'Beğendiğin kitaplara kalp bırakarak burada görünmelerini sağlayabilirsin.',
         ),
       );
     }

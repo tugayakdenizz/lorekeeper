@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
@@ -31,6 +32,9 @@ dev_dependencies:
   freezed: ^3.2.3
   json_serializable: ^6.11.1
 
+  flutter_native_splash: ^2.4.6
+  flutter_launcher_icons: ^0.14.4
+
 flutter:
   generate: true
   uses-material-design: true
@@ -38,3 +42,21 @@ flutter:
   assets:
     - assets/images/
     - assets/covers/
+
+flutter_native_splash:
+  color: "#0B1020"
+  image: assets/images/lorekeeper_icon.png
+
+  android: true
+  ios: true
+  web: false
+
+  android_12:
+    color: "#0B1020"
+    image: assets/images/lorekeeper_icon.png
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/images/lorekeeper_icon.png
+  remove_alpha_ios: true

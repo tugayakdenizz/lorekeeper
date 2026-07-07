@@ -4,6 +4,7 @@ import '../../core/services/library_storage_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../shared/models/user_book.dart';
+import '../../shared/widgets/empty_state.dart';
 import 'widgets/library_book_card.dart';
 
 enum _LibraryFilter {
@@ -329,22 +330,20 @@ class _LibraryContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLibraryEmpty) {
-      return const Center(
-        child: Text(
-          'Henüz kütüphanene kitap eklemedin.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textSecondary),
-        ),
+      return const EmptyState(
+        icon: Icons.menu_book_rounded,
+        title: 'Rafların henüz boş',
+        subtitle:
+            'İlk kitabını Keşfet bölümünden ekleyerek kendi kütüphaneni oluşturmaya başla.',
       );
     }
 
     if (userBooks.isEmpty) {
-      return const Center(
-        child: Text(
-          'Bu arama veya filtreyle eşleşen kitap yok.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textSecondary),
-        ),
+      return const EmptyState(
+        icon: Icons.search_off_rounded,
+        title: 'Raflarda iz bulunamadı',
+        subtitle:
+            'Bu arama veya filtreyle eşleşen bir kitap bulunamadı.',
       );
     }
 
