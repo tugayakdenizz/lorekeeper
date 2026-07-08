@@ -2,10 +2,10 @@ name: lorekeeper
 description: "A premium reading companion built with Flutter."
 publish_to: 'none'
 
-version: 1.0.0+6
+version: 1.0.0+8
 
 environment:
-  sdk: ">=3.9.0 <4.0.0"
+  sdk: ^3.12.2
 
 dependencies:
   flutter:
