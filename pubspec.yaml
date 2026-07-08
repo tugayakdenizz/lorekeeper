@@ -2,7 +2,7 @@ name: lorekeeper
 description: "A premium reading companion built with Flutter."
 publish_to: 'none'
 
-version: 1.0.0+11
+version: 1.0.0+13
 
 environment:
   sdk: ^3.12.2
@@ -12,7 +12,7 @@ dependencies:
     sdk: flutter
 
   hive: ^2.2.3
-  hive_flutter: ^1.1.0
+  
 
   flutter_localizations:
     sdk: flutter
@@ -61,5 +61,3 @@ flutter_launcher_icons:
   image_path: assets/images/lorekeeper_icon.png
   remove_alpha_ios: true
 
-dependency_overrides:
-  path_provider_foundation: 2.4.1
