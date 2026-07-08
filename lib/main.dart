@@ -1,30 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:lorekeeper/l10n/app_localizations.dart';
+
+import 'core/services/library_storage_service.dart';
+import 'core/services/reading_goal_service.dart';
+import 'core/theme/app_theme.dart';
+import 'features/main/main_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const DiagnosticApp());
+
+  final libraryStorage = LibraryStorageService();
+  await libraryStorage.init();
+
+  final readingGoalService = ReadingGoalService();
+  await readingGoalService.init();
+
+  runApp(const LoreKeeperApp());
 }
 
-class DiagnosticApp extends StatelessWidget {
-  const DiagnosticApp({super.key});
+class LoreKeeperApp extends StatelessWidget {
+  const LoreKeeperApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
+      title: 'LoreKeeper',
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        backgroundColor: Color(0xFF0B1020),
-        body: Center(
-          child: Text(
-            'LoreKeeper açıldı ✅',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
+      theme: AppTheme.darkTheme,
+      locale: const Locale('tr'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: const MainShell(),
     );
   }
 }
