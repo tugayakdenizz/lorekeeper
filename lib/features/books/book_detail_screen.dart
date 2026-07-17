@@ -12,6 +12,8 @@ import 'widgets/progress_bottom_sheet.dart';
 import 'widgets/rating_section.dart';
 import 'widgets/reading_progress_section.dart';
 import 'widgets/reading_sessions_section.dart';
+import 'widgets/book_series_section.dart';
+import '../reader/reader_launcher.dart';
 
 class BookDetailScreen extends StatefulWidget {
   final Book book;
@@ -108,6 +110,47 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     setState(() {});
   }
 
+
+  Future<void> _toggleSeriesTracking() async {
+    if (!_isAdded) {
+      await _storage.addBook(widget.book);
+    }
+
+    final current = _userBook;
+    if (current == null) return;
+
+    final fallbackSeriesTitle =
+        (current.book.seriesId ?? '').trim().isNotEmpty
+            ? current.book.seriesId!.trim()
+            : current.book.title.trim();
+
+    await _storage.updateUserBook(
+      current.copyWith(
+        isSeriesTracked: !current.isSeriesTracked,
+        trackedSeriesTitle: current.isSeriesTracked
+            ? null
+            : fallbackSeriesTitle,
+        updatedAt: DateTime.now(),
+      ),
+    );
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+
+  Future<void> _openReader() async {
+    await ReaderLauncher.showSourcePicker(
+      context: context,
+      book: widget.book,
+    );
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   Future<void> _showProgressSheet() async {
     if (!_isAdded) {
       await _storage.addBook(widget.book);
@@ -174,6 +217,13 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                 onPressed: _toggleBook,
               ),
 
+              const SizedBox(height: AppSpacing.md),
+
+              _ReadBookButton(
+                hasProgress: (userBook?.currentPage ?? 0) > 0,
+                onPressed: _openReader,
+              ),
+
               const SizedBox(height: AppSpacing.xl),
 
               _PremiumSection(
@@ -199,6 +249,19 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                   userBook: userBook,
                   totalPages: _totalPages,
                   onUpdatePressed: _showProgressSheet,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              _PremiumSection(
+                child: BookSeriesSection(
+                  seriesTitle: (userBook?.trackedSeriesTitle ??
+                          book.seriesId ??
+                          book.title)
+                      .trim(),
+                  volumeNumber: book.volumeNumber,
+                  isTracked: userBook?.isSeriesTracked == true,
+                  onToggleTracking: _toggleSeriesTracking,
                 ),
               ),
 
@@ -614,6 +677,44 @@ class _PrimaryActionButton extends StatelessWidget {
             side: BorderSide(
               color: isAdded ? AppColors.border : AppColors.gold,
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+class _ReadBookButton extends StatelessWidget {
+  final bool hasProgress;
+  final VoidCallback onPressed;
+
+  const _ReadBookButton({
+    required this.hasProgress,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 58,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: const Icon(Icons.auto_stories_rounded),
+        label: Text(
+          hasProgress ? 'Okumaya Devam Et' : 'Kitabı Oku',
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 15,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.gold,
+          foregroundColor: AppColors.background,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
         ),
       ),

@@ -23,6 +23,8 @@ abstract class UserBook with _$UserBook {
     @Default(0) int currentPage,
     @Default([]) List<ReadingSession> readingSessions,
     @Default(false) bool isFavorite,
+    @Default(false) bool isSeriesTracked,
+    String? trackedSeriesTitle,
     double? userRating,
     int? totalPagesOverride,
     DateTime? addedAt,

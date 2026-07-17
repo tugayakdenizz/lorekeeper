@@ -19,6 +19,8 @@ _UserBook _$UserBookFromJson(Map<String, dynamic> json) => _UserBook(
           .toList() ??
       const [],
   isFavorite: json['isFavorite'] as bool? ?? false,
+  isSeriesTracked: json['isSeriesTracked'] as bool? ?? false,
+  trackedSeriesTitle: json['trackedSeriesTitle'] as String?,
   userRating: (json['userRating'] as num?)?.toDouble(),
   totalPagesOverride: (json['totalPagesOverride'] as num?)?.toInt(),
   addedAt: json['addedAt'] == null
@@ -42,6 +44,8 @@ Map<String, dynamic> _$UserBookToJson(_UserBook instance) => <String, dynamic>{
   'currentPage': instance.currentPage,
   'readingSessions': instance.readingSessions.map((e) => e.toJson()).toList(),
   'isFavorite': instance.isFavorite,
+  'isSeriesTracked': instance.isSeriesTracked,
+  'trackedSeriesTitle': instance.trackedSeriesTitle,
   'userRating': instance.userRating,
   'totalPagesOverride': instance.totalPagesOverride,
   'addedAt': instance.addedAt?.toIso8601String(),
