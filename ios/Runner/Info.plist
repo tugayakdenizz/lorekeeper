@@ -68,5 +68,13 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSCameraUsageDescription</key>
+<string>LoreKeeper, kitap kapaklarını ve ilgili görselleri eklemek için kameraya erişebilir.</string>
+
+<key>NSPhotoLibraryUsageDescription</key>
+<string>LoreKeeper, cihazınızdaki kitap kapaklarını ve ilgili görselleri seçebilmeniz için fotoğraf arşivine erişebilir.</string>
+
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>LoreKeeper, kullanılan bazı sistem bileşenlerinin çalışabilmesi için uygulama açıkken konum izni isteyebilir.</string>
 	</dict>
 </plist>
