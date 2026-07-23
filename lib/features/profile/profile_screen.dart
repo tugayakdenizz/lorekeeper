@@ -5,6 +5,7 @@ import '../../core/services/reading_goal_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../shared/models/user_book.dart';
+import '../quotes/saved_quotes_screen.dart';
 import 'widgets/achievements_section.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -212,6 +213,18 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.xl),
                     _FavoritesSection(favoriteBooks: favoriteBooks),
                     const SizedBox(height: AppSpacing.xl),
+                    _MenuTile(
+                      icon: Icons.format_quote_rounded,
+                      title: 'Alıntılarım',
+                      subtitle: 'Kaydettiğin sözleri gör ve paylaş',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const SavedQuotesScreen(),
+                          ),
+                        );
+                      },
+                    ),
                     const _MenuTile(
                       icon: Icons.language,
                       title: 'Dil',
@@ -569,46 +582,64 @@ class _MenuTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final VoidCallback? onTap;
 
   const _MenuTile({
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Material(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.gold),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(22),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w900,
+                Icon(icon, color: AppColors.gold),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Text(
-                  subtitle,
-                  style: const TextStyle(color: AppColors.textSecondary),
-                ),
+                if (onTap != null)
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textMuted,
+                  ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

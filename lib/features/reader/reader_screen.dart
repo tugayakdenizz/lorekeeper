@@ -5,6 +5,7 @@ import 'package:flutter_html/flutter_html.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
+import '../quotes/quote_studio_screen.dart';
 import 'models/reader_document.dart';
 import 'services/reader_storage_service.dart';
 
@@ -26,6 +27,7 @@ class _ReaderScreenState extends State<ReaderScreen>
   bool _controlsVisible = true;
   Timer? _saveTimer;
   Timer? _readingTimer;
+  String _selectedQuoteText = '';
 
   int get _chapterIndex => _progress.chapterIndex.clamp(
         0,
@@ -209,6 +211,29 @@ class _ReaderScreenState extends State<ReaderScreen>
     await _saveNow();
   }
 
+
+  void _openQuoteStudio() {
+    final selected = _selectedQuoteText.trim();
+    if (selected.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Önce kitaptan paylaşmak istediğin sözü seç.'),
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => QuoteStudioScreen(
+          quote: selected,
+          bookTitle: widget.document.title,
+          author: widget.document.author,
+        ),
+      ),
+    );
+  }
+
   void _showSettings() {
     showModalBottomSheet<void>(
       context: context,
@@ -323,6 +348,9 @@ ${_chapter.htmlContent}
                           ),
                           const SizedBox(height: 22),
                           SelectionArea(
+                            onSelectionChanged: (selection) {
+                              _selectedQuoteText = selection?.plainText ?? '';
+                            },
                             child: Html(data: html, shrinkWrap: true),
                           ),
                           const SizedBox(height: 40),
@@ -464,10 +492,11 @@ class _BottomBar extends StatelessWidget {
   final _ReaderPalette palette;
   final VoidCallback onLibrary;
   final VoidCallback onNote;
+  final VoidCallback onQuote;
   final VoidCallback onSettings;
   final int readSeconds;
 
-  const _BottomBar({required this.palette, required this.onLibrary, required this.onNote, required this.onSettings, required this.readSeconds});
+  const _BottomBar({required this.palette, required this.onLibrary, required this.onNote, required this.onQuote, required this.onSettings, required this.readSeconds});
 
   @override
   Widget build(BuildContext context) {
@@ -481,6 +510,7 @@ class _BottomBar extends StatelessWidget {
         children: [
           _Action(icon: Icons.toc_rounded, label: 'Kitap', palette: palette, onTap: onLibrary),
           _Action(icon: Icons.note_add_outlined, label: 'Not', palette: palette, onTap: onNote),
+          _Action(icon: Icons.format_quote_rounded, label: 'Alıntı', palette: palette, onTap: onQuote),
           _Action(icon: Icons.text_fields_rounded, label: 'Görünüm', palette: palette, onTap: onSettings),
           _Action(icon: Icons.timer_outlined, label: '$minutes dk', palette: palette, onTap: onLibrary),
         ],
