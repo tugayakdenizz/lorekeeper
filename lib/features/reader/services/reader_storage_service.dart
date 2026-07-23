@@ -81,6 +81,17 @@ class ReaderStorageService {
       ? Hive.box<dynamic>(_boxName)
       : Hive.openBox<dynamic>(_boxName);
 
+
+  Future<bool> hasAcknowledgedPublicDomainNotice() async {
+    final box = await _openBox();
+    return box.get('settings:public-domain-notice-v1') == true;
+  }
+
+  Future<void> acknowledgePublicDomainNotice() async {
+    final box = await _openBox();
+    await box.put('settings:public-domain-notice-v1', true);
+  }
+
   Future<void> saveProgress(String documentId, ReaderProgress progress) async {
     final box = await _openBox();
     await box.put('progress:$documentId', progress.toJson());

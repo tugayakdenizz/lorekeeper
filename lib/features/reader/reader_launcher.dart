@@ -140,6 +140,9 @@ class ReaderLauncher {
     required BuildContext context,
     required Book book,
   }) async {
+    final canContinue = await _confirmPublicDomainAccess(context);
+    if (!canContinue || !context.mounted) return;
+
     var loadingIsOpen = false;
 
     try {
@@ -226,6 +229,60 @@ class ReaderLauncher {
         ),
       ),
     );
+  }
+
+  static Future<bool> _confirmPublicDomainAccess(
+    BuildContext context,
+  ) async {
+    final alreadyAccepted =
+        await _storage.hasAcknowledgedPublicDomainNotice();
+    if (alreadyAccepted) return true;
+    if (!context.mounted) return false;
+
+    final accepted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text(
+            'Ücretsiz kitap kaynağı',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          content: const Text(
+            'Ücretsiz EPUB dosyaları Gutendex API aracılığıyla '
+            'Project Gutenberg kataloğundan sağlanır. '
+            'Project Gutenberg®, LoreKeeper ile bağlantılı veya sponsor değildir. '
+            'İçeriğe erişirken bulunduğunuz ülkedeki kullanım koşullarına '
+            've telif kurallarına uymanız gerekir.',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Vazgeç'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Devam Et'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (accepted == true) {
+      await _storage.acknowledgePublicDomainNotice();
+      return true;
+    }
+
+    return false;
   }
 
   static void _showLoading(

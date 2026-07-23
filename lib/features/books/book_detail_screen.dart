@@ -980,6 +980,42 @@ class _DeviceStorageSection extends StatelessWidget {
               ),
             ),
         ],
+        const SizedBox(height: AppSpacing.lg),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.gold.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.gold.withOpacity(0.25),
+            ),
+          ),
+          child: const Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.info_outline_rounded,
+                color: AppColors.gold,
+                size: 21,
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Ücretsiz kitaplar Gutendex API aracılığıyla Project Gutenberg kataloğundan sağlanır. '
+                  'Project Gutenberg®, LoreKeeper ile bağlantılı veya sponsor değildir. '
+                  'Kendi EPUB dosyalarınızın kullanım hakkından siz sorumlusunuz.',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    height: 1.45,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
