@@ -14,6 +14,7 @@ import 'widgets/reading_progress_section.dart';
 import 'widgets/reading_sessions_section.dart';
 import 'widgets/book_series_section.dart';
 import '../reader/reader_launcher.dart';
+import '../reader/services/reader_storage_service.dart';
 
 class BookDetailScreen extends StatefulWidget {
   final Book book;
@@ -29,6 +30,25 @@ class BookDetailScreen extends StatefulWidget {
 
 class _BookDetailScreenState extends State<BookDetailScreen> {
   final _storage = LibraryStorageService();
+  final _readerStorage = ReaderStorageService();
+
+  DownloadedBookInfo? _downloadInfo;
+  bool _isCheckingDownload = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshDownloadInfo();
+  }
+
+  Future<void> _refreshDownloadInfo() async {
+    final info = await _readerStorage.getDownloadedBookInfo(widget.book.id);
+    if (!mounted) return;
+    setState(() {
+      _downloadInfo = info;
+      _isCheckingDownload = false;
+    });
+  }
 
   bool get _isAdded => _storage.containsBook(widget.book.id);
 
@@ -107,9 +127,104 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
       ),
     );
 
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
+
+    if (status == UserBookStatus.finished && _downloadInfo != null && mounted) {
+      await _showFinishedDownloadDialog();
+    }
   }
 
+  Future<void> _showFinishedDownloadDialog() async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text(
+          'Kitap tamamlandı 🎉',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        content: const Text(
+          'İndirilen EPUB dosyasını cihazdan kaldırmak ister misin? '
+          'Okundu bilgisi, ilerleme, notlar, alıntılar ve yer imleri korunur.',
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            height: 1.45,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cihazda Tut'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Cihazdan Kaldır'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete == true) {
+      await _deleteDownloadedBook();
+    }
+  }
+
+  Future<void> _deleteDownloadedBook() async {
+    await _readerStorage.deleteDownloadedBook(widget.book.id);
+    await _refreshDownloadInfo();
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'İndirilen dosya kaldırıldı. Okuma geçmişin ve notların korundu.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteDownloadedBook() async {
+    final approved = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text(
+          'İndirilen dosya kaldırılsın mı?',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        content: const Text(
+          'Yalnızca cihazdaki EPUB dosyası silinir. Okundu bilgisi, '
+          'ilerleme, puan, favori, notlar, alıntılar ve yer imleri korunur.',
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            height: 1.45,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Cihazdan Kaldır'),
+          ),
+        ],
+      ),
+    );
+
+    if (approved == true) {
+      await _deleteDownloadedBook();
+    }
+  }
 
   Future<void> _toggleSeriesTracking() async {
     if (!_isAdded) {
@@ -145,6 +260,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
       context: context,
       book: widget.book,
     );
+
+    await _refreshDownloadInfo();
 
     if (mounted) {
       setState(() {});
@@ -220,8 +337,25 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
               const SizedBox(height: AppSpacing.md),
 
               _ReadBookButton(
-                hasProgress: (userBook?.currentPage ?? 0) > 0,
+                isDownloaded: _downloadInfo != null,
+                isLoading: _isCheckingDownload,
+                hasHistory: (userBook?.currentPage ?? 0) > 0 ||
+                    userBook?.status == UserBookStatus.reading ||
+                    userBook?.status == UserBookStatus.finished,
                 onPressed: _openReader,
+              ),
+
+              const SizedBox(height: AppSpacing.lg),
+
+              _PremiumSection(
+                child: _DeviceStorageSection(
+                  info: _downloadInfo,
+                  isLoading: _isCheckingDownload,
+                  hasHistory: (userBook?.currentPage ?? 0) > 0 ||
+                      userBook?.status == UserBookStatus.reading ||
+                      userBook?.status == UserBookStatus.finished,
+                  onDelete: _confirmDeleteDownloadedBook,
+                ),
               ),
 
               const SizedBox(height: AppSpacing.xl),
@@ -686,13 +820,23 @@ class _PrimaryActionButton extends StatelessWidget {
 
 
 class _ReadBookButton extends StatelessWidget {
-  final bool hasProgress;
+  final bool isDownloaded;
+  final bool isLoading;
+  final bool hasHistory;
   final VoidCallback onPressed;
 
   const _ReadBookButton({
-    required this.hasProgress,
+    required this.isDownloaded,
+    required this.isLoading,
+    required this.hasHistory,
     required this.onPressed,
   });
+
+  String get _label {
+    if (isDownloaded) return 'Okumaya Devam Et';
+    if (hasHistory) return 'Yeniden İndir';
+    return 'Kitabı Oku';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -700,10 +844,20 @@ class _ReadBookButton extends StatelessWidget {
       width: double.infinity,
       height: 58,
       child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: const Icon(Icons.auto_stories_rounded),
+        onPressed: isLoading ? null : onPressed,
+        icon: isLoading
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(
+                isDownloaded
+                    ? Icons.auto_stories_rounded
+                    : Icons.download_rounded,
+              ),
         label: Text(
-          hasProgress ? 'Okumaya Devam Et' : 'Kitabı Oku',
+          isLoading ? 'Kontrol Ediliyor…' : _label,
           style: const TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 15,
@@ -712,11 +866,188 @@ class _ReadBookButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.gold,
           foregroundColor: AppColors.background,
+          disabledBackgroundColor: AppColors.surfaceLight,
+          disabledForegroundColor: AppColors.textSecondary,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DeviceStorageSection extends StatelessWidget {
+  final DownloadedBookInfo? info;
+  final bool isLoading;
+  final bool hasHistory;
+  final VoidCallback onDelete;
+
+  const _DeviceStorageSection({
+    required this.info,
+    required this.isLoading,
+    required this.hasHistory,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final downloaded = info != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Cihaz Depolaması',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        if (isLoading)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(12),
+              child: CircularProgressIndicator(color: AppColors.gold),
+            ),
+          )
+        else ...[
+          _StorageInfoRow(
+            icon: downloaded
+                ? Icons.download_done_rounded
+                : Icons.cloud_off_rounded,
+            label: 'Durum',
+            value: downloaded
+                ? 'Cihazda'
+                : hasHistory
+                    ? 'Dosya kaldırıldı'
+                    : 'Henüz indirilmedi',
+          ),
+          if (downloaded) ...[
+            _StorageInfoRow(
+              icon: Icons.data_usage_rounded,
+              label: 'Boyut',
+              value: _formatBytes(info!.fileSize),
+            ),
+            _StorageInfoRow(
+              icon: Icons.calendar_month_rounded,
+              label: 'İndirme tarihi',
+              value: _dateText(info!.downloadedAt),
+            ),
+            _StorageInfoRow(
+              icon: Icons.source_rounded,
+              label: 'Kaynak',
+              value: info!.sourceType == ReaderSourceType.gutenberg
+                  ? 'Project Gutenberg'
+                  : 'Yerel EPUB',
+              isLast: true,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline_rounded),
+                label: const Text(
+                  'İndirilen Dosyayı Kaldır',
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  side: BorderSide(
+                    color: Colors.redAccent.withOpacity(0.55),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+              ),
+            ),
+          ] else
+            Text(
+              hasHistory
+                  ? 'Okuma geçmişin korunuyor. Tekrar okumak için “Yeniden İndir” düğmesini kullanabilirsin.'
+                  : 'Kitabı ilk kez açtığında EPUB cihazına kaydedilecek.',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                height: 1.45,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+
+  static String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    final kb = bytes / 1024;
+    if (kb < 1024) return '${kb.toStringAsFixed(1)} KB';
+    final mb = kb / 1024;
+    return '${mb.toStringAsFixed(1)} MB';
+  }
+
+  static String _dateText(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}.'
+        '${date.month.toString().padLeft(2, '0')}.'
+        '${date.year}';
+  }
+}
+
+class _StorageInfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool isLast;
+
+  const _StorageInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.isLast = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(top: 11, bottom: isLast ? 0 : 11),
+      decoration: BoxDecoration(
+        border: isLast
+            ? null
+            : Border(
+                bottom: BorderSide(
+                  color: AppColors.border.withOpacity(0.65),
+                ),
+              ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.gold, size: 20),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

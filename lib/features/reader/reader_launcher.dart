@@ -20,30 +20,48 @@ class ReaderLauncher {
     required BuildContext context,
     required Book book,
   }) async {
-    final selection =
-        await showModalBottomSheet<_ReaderSourceSelection>(
+    final cached = await _storage.loadDownloadedBook(book.id);
+
+    if (cached != null) {
+      if (!context.mounted) return;
+
+      _showLoading(context, 'Kitap cihazdan açılıyor…');
+
+      try {
+        final document = await _parser.parse(
+          bytes: cached.bytes,
+          fallbackTitle: cached.info.title,
+          fallbackAuthor: cached.info.author,
+          documentId: cached.info.documentId,
+          sourceType: cached.info.sourceType,
+          sourceUrl: cached.info.sourceUrl,
+        );
+
+        if (!context.mounted) return;
+        Navigator.pop(context);
+        await _openReader(context, document);
+        return;
+      } catch (error) {
+        if (!context.mounted) return;
+        Navigator.pop(context);
+        _showError(context, error);
+        return;
+      }
+    }
+
+    final selection = await showModalBottomSheet<_ReaderSourceSelection>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => _ReaderSourceSheet(
-        bookTitle: book.title,
-      ),
+      builder: (context) => _ReaderSourceSheet(bookTitle: book.title),
     );
 
-    if (selection == null || !context.mounted) {
-      return;
-    }
+    if (selection == null || !context.mounted) return;
 
     switch (selection) {
       case _ReaderSourceSelection.localEpub:
-        await _openLocalEpub(
-          context: context,
-          book: book,
-        );
+        await _openLocalEpub(context: context, book: book);
       case _ReaderSourceSelection.gutenberg:
-        await _openMatchedGutenbergBook(
-          context: context,
-          book: book,
-        );
+        await _openMatchedGutenbergBook(context: context, book: book);
     }
   }
 
@@ -81,8 +99,7 @@ class ReaderLauncher {
         'EPUB hazırlanıyor…',
       );
 
-      final documentId =
-          'local:${book.id}:${file.name.hashCode}';
+      final documentId = 'local:${book.id}';
 
       final document = await _parser.parse(
         bytes: Uint8List.fromList(bytes),
@@ -92,9 +109,14 @@ class ReaderLauncher {
         sourceType: ReaderSourceType.localEpub,
       );
 
-      await _storage.saveLocalEpub(
+      await _storage.saveDownloadedEpub(
+        bookId: book.id,
         documentId: document.id,
         fileName: file.name,
+        title: document.title,
+        author: document.author,
+        sourceType: document.sourceType,
+        sourceUrl: document.sourceUrl,
         bytes: Uint8List.fromList(bytes),
       );
 
@@ -158,6 +180,17 @@ class ReaderLauncher {
         documentId: 'gutenberg:${selected.id}',
         sourceType: ReaderSourceType.gutenberg,
         sourceUrl: selected.epubUrl,
+      );
+
+      await _storage.saveDownloadedEpub(
+        bookId: book.id,
+        documentId: document.id,
+        fileName: 'gutenberg_${selected.id}.epub',
+        title: document.title,
+        author: document.author,
+        sourceType: document.sourceType,
+        sourceUrl: document.sourceUrl,
+        bytes: bytes,
       );
 
       if (!context.mounted) {
