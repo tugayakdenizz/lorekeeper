@@ -13,6 +13,7 @@ import 'widgets/rating_section.dart';
 import 'widgets/reading_progress_section.dart';
 import 'widgets/reading_sessions_section.dart';
 import 'widgets/book_series_section.dart';
+import '../reader/models/reader_document.dart';
 import '../reader/reader_launcher.dart';
 import '../reader/services/reader_storage_service.dart';
 
