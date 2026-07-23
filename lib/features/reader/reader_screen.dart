@@ -392,6 +392,7 @@ ${_chapter.htmlContent}
                           palette: palette,
                           onLibrary: _showLibraryPanel,
                           onNote: _addNote,
+                          onQuote: _openQuoteStudio,
                           onSettings: _showSettings,
                           readSeconds: _progress.totalReadSeconds,
                         ),
