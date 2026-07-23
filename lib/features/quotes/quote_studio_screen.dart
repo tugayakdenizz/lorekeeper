@@ -38,7 +38,16 @@ class _QuoteStudioScreenState extends State<QuoteStudioScreen> {
       final renderObject = _captureKey.currentContext?.findRenderObject();
       if (renderObject is! RenderRepaintBoundary) throw StateError('Paylaşım önizlemesi hazır değil.');
       final file = await _exportService.exportPng(boundary: renderObject, fileName: 'lorekeeper_quote_${DateTime.now().millisecondsSinceEpoch}');
-      await _exportService.shareFile(file: file, text: '${widget.bookTitle} — ${widget.author}');
+      final box = context.findRenderObject() as RenderBox?;
+      final origin = box != null
+          ? (box.localToGlobal(Offset.zero) & box.size)
+          : null;
+
+      await _exportService.shareFile(
+        file: file,
+        text: '${widget.bookTitle} — ${widget.author}',
+        sharePositionOrigin: origin,
+      );
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Paylaşım hazırlanamadı: $error')));
